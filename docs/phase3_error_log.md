@@ -264,3 +264,28 @@
 
 - The next Pages deployment will be based only on the actual web app files and essential docs.
 - Online state and `main` branch state should converge again after the new build succeeds.
+
+---
+
+## 2026-03-12 15:27:34 - Piece Rows Expanded Board Height
+
+### Symptom
+
+- Rows with pieces were visibly taller than empty rows.
+- The board looked close to square overall, but the inner 8x8 grid was not using uniform row heights.
+
+### Root Cause
+
+- The board grid only defined columns.
+- Grid rows were still content-sized, so emoji pieces increased the height of occupied ranks.
+
+### Fix
+
+- Added `grid-template-rows: repeat(8, minmax(0, 1fr))` to the board grid.
+- Added `min-width: 0`, `min-height: 0`, and `overflow: hidden` to each square.
+- Reduced piece box padding and forced emoji rendering to use a tighter emoji font stack and line-height.
+
+### Result
+
+- Occupied and empty ranks now share the same height.
+- The 8x8 board should render as a proper square grid instead of expanding around emoji content.
