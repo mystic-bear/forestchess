@@ -52,6 +52,14 @@
 
   const { AI_LEVEL_INFO, COACH_PROFILE, REVIEW_PROFILE, ENGINE_ASSET_CANDIDATES, translateUi, DEFAULT_LANGUAGE } = constants;
   let engineSessionPromise = null;
+  const PIECE_VALUES = {
+    p: 100,
+    n: 320,
+    b: 330,
+    r: 500,
+    q: 900,
+    k: 20000
+  };
 
   function t(gameState, key, params = {}) {
     return translateUi((gameState && gameState.language) || DEFAULT_LANGUAGE || "ko", key, params);
@@ -104,6 +112,125 @@
       backend: analysis?.backend ?? null,
       partial: !!analysis?.partial,
       searchPhase: analysis?.searchPhase || null
+    };
+  }
+
+  function getCandidateEntries(fen, analysis) {
+    const state = ChessState.parseFen(fen);
+    const rawEntries = Array.isArray(analysis?.multipv) && analysis.multipv.length > 0
+      ? analysis.multipv
+      : [analysis];
+
+    return rawEntries.map((entry, index) => {
+      const uci = entry?.move || entry?.bestmove || entry?.pv?.[0] || (index === 0 ? analysis?.bestmove : null);
+      const move = uci ? ChessState.parseUciMove(state, uci) : null;
+      if (!move) return null;
+      return {
+        rank: index + 1,
+        uci,
+        move,
+        pv: entry?.pv || [],
+        scoreCp: entry?.scoreCp ?? null,
+        scoreMate: entry?.scoreMate ?? null,
+        depth: entry?.depth ?? analysis?.depth ?? null
+      };
+    }).filter(Boolean);
+  }
+
+  function pickWeightedCandidate(candidates, weights) {
+    if (!Array.isArray(candidates) || candidates.length === 0) return null;
+    if (candidates.length === 1) return candidates[0];
+
+    const normalizedWeights = candidates.map((_, index) => {
+      const weight = Array.isArray(weights) ? Number(weights[index]) : null;
+      return Number.isFinite(weight) && weight > 0 ? weight : 0;
+    });
+    const totalWeight = normalizedWeights.reduce((sum, value) => sum + value, 0);
+
+    if (totalWeight <= 0) {
+      return candidates[0];
+    }
+
+    let roll = Math.random() * totalWeight;
+    for (let index = 0; index < candidates.length; index += 1) {
+      roll -= normalizedWeights[index];
+      if (roll <= 0) return candidates[index];
+    }
+    return candidates[candidates.length - 1];
+  }
+
+  function evaluateImmediateRisk(game, candidateUci) {
+    const nextGame = ChessRules.makeMove(game, candidateUci);
+    const replies = ChessState.generateLegalMoves(nextGame.state);
+    let mateInOne = false;
+    let maxImmediateNetLoss = 0;
+    let queenHang = false;
+
+    for (let index = 0; index < replies.length; index += 1) {
+      const reply = replies[index];
+      if (reply.flags.capture || reply.flags.enPassant) {
+        const capturedType = ChessState.pieceType(reply.captured);
+        const attackerType = ChessState.pieceType(reply.piece);
+        const capturedValue = PIECE_VALUES[capturedType] || 0;
+        const attackerValue = PIECE_VALUES[attackerType] || 0;
+        const netLoss = Math.max(0, capturedValue - attackerValue);
+        if (netLoss > maxImmediateNetLoss) {
+          maxImmediateNetLoss = netLoss;
+        }
+        if (capturedType === "q" && netLoss >= 300) {
+          queenHang = true;
+        }
+      }
+
+      const afterReply = ChessRules.makeMove(nextGame, reply.uci);
+      const status = ChessRules.getGameStatus(afterReply);
+      if (status.checkmate) {
+        mateInOne = true;
+        break;
+      }
+    }
+
+    return {
+      mateInOne,
+      queenHang,
+      maxImmediateNetLoss
+    };
+  }
+
+  function chooseMoveFromCandidates(fen, profile, analysis) {
+    const candidates = getCandidateEntries(fen, analysis);
+    if (candidates.length === 0) return analysis;
+    if ((profile?.multipv || 1) <= 1 || candidates.length === 1) {
+      const first = candidates[0];
+      return {
+        ...analysis,
+        bestmove: first.uci,
+        pv: first.pv,
+        scoreCp: first.scoreCp,
+        scoreMate: first.scoreMate,
+        depth: first.depth
+      };
+    }
+
+    const game = ChessRules.createGame({ fen });
+    const safeCandidates = candidates.filter((candidate) => {
+      const risk = evaluateImmediateRisk(game, candidate.uci);
+      if (profile.avoidMateInOne && risk.mateInOne) return false;
+      if (Number.isFinite(profile.maxImmediateNetLoss) && risk.maxImmediateNetLoss >= profile.maxImmediateNetLoss) return false;
+      return true;
+    });
+
+    const pool = safeCandidates.length > 0 ? safeCandidates : candidates;
+    const selected = pickWeightedCandidate(pool, profile.choiceWeights);
+    if (!selected) return analysis;
+
+    return {
+      ...analysis,
+      bestmove: selected.uci,
+      pv: selected.pv,
+      scoreCp: selected.scoreCp,
+      scoreMate: selected.scoreMate,
+      depth: selected.depth
     };
   }
 
@@ -212,11 +339,13 @@
       }
     });
 
+    const selectedAnalysis = chooseMoveFromCandidates(fen, profile, analysis);
+
     post({
       type: "moveResult",
       id: request.id,
       stateVersion: request.stateVersion,
-      move: buildMovePacket(fen, analysis)
+      move: buildMovePacket(fen, selectedAnalysis)
     });
   }
 

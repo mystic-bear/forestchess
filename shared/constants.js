@@ -31,43 +31,92 @@
       short: "AI-1",
       label: { ko: "AI-1 / 600", en: "AI-1 / 600" },
       desc: { ko: "입문", en: "Entry" },
-      engine: { movetime: 80, skillLevel: 0, multipv: 1 }
+      engine: {
+        movetime: 35,
+        skillLevel: 0,
+        multipv: 4,
+        choiceWeights: [0.4, 0.3, 0.2, 0.1],
+        avoidMateInOne: true,
+        maxImmediateNetLoss: null
+      }
     },
     2: {
       short: "AI-2",
       label: { ko: "AI-2 / 900", en: "AI-2 / 900" },
       desc: { ko: "쉬움", en: "Easy" },
-      engine: { movetime: 120, skillLevel: 2, multipv: 1 }
+      engine: {
+        movetime: 60,
+        skillLevel: 1,
+        multipv: 3,
+        choiceWeights: [0.55, 0.3, 0.15],
+        avoidMateInOne: true,
+        maxImmediateNetLoss: 500
+      }
     },
     3: {
       short: "AI-3",
       label: { ko: "AI-3 / 1200", en: "AI-3 / 1200" },
       desc: { ko: "학습", en: "Learning" },
-      engine: { movetime: 180, skillLevel: 4, multipv: 1 }
+      engine: {
+        movetime: 100,
+        skillLevel: 3,
+        multipv: 3,
+        choiceWeights: [0.7, 0.2, 0.1],
+        avoidMateInOne: true,
+        maxImmediateNetLoss: 180
+      }
     },
     4: {
       short: "AI-4",
       label: { ko: "AI-4 / 1400", en: "AI-4 / 1400" },
       desc: { ko: "클럽", en: "Club" },
-      engine: { movetime: 260, skillLevel: 6, multipv: 1 }
+      engine: {
+        movetime: 180,
+        skillLevel: 5,
+        multipv: 2,
+        choiceWeights: [0.85, 0.15],
+        avoidMateInOne: true,
+        maxImmediateNetLoss: 120
+      }
     },
     5: {
       short: "AI-5",
       label: { ko: "AI-5 / 1600", en: "AI-5 / 1600" },
       desc: { ko: "안정", en: "Solid" },
-      engine: { movetime: 400, skillLevel: 10, multipv: 1 }
+      engine: {
+        movetime: 320,
+        skillLevel: 8,
+        multipv: 2,
+        choiceWeights: [0.94, 0.06],
+        avoidMateInOne: true,
+        maxImmediateNetLoss: 100
+      }
     },
     6: {
       short: "AI-6",
       label: { ko: "AI-6 / 1800", en: "AI-6 / 1800" },
       desc: { ko: "강함", en: "Strong" },
-      engine: { movetime: 650, skillLevel: 14, multipv: 1 }
+      engine: {
+        movetime: 550,
+        skillLevel: 12,
+        multipv: 1,
+        choiceWeights: [1],
+        avoidMateInOne: true,
+        maxImmediateNetLoss: 100
+      }
     },
     7: {
       short: "AI-7",
       label: { ko: "AI-7 / 2000 챌린지", en: "AI-7 / 2000 Challenge" },
       desc: { ko: "챌린지", en: "Challenge" },
-      engine: { movetime: 1000, skillLevel: 18, multipv: 1 }
+      engine: {
+        movetime: 1000,
+        skillLevel: 18,
+        multipv: 1,
+        choiceWeights: [1],
+        avoidMateInOne: true,
+        maxImmediateNetLoss: 80
+      }
     }
   };
 
