@@ -13,6 +13,11 @@ window.ui = ui;
 const game = new Game();
 window.game = game;
 
+ui.renderStart();
 ui.renderSetup();
-ui.renderRuleOptions();
-ui.renderQuickStartMixedLevel();
+ui.showScreen("start-screen");
+ui.updateAll();
+
+window.addEventListener("resize", () => {
+  ui.updateAll();
+});

@@ -1,384 +1,405 @@
 const ui = {
   showScreen(id) {
-    document.querySelectorAll(".screen").forEach(screen => screen.classList.add("hidden"));
-    document.getElementById(id).classList.remove("hidden");
+    document.querySelectorAll(".screen").forEach((screen) => screen.classList.add("hidden"));
+    const target = document.getElementById(id);
+    if (target) target.classList.remove("hidden");
   },
 
   showSetup() {
-    document.getElementById("menu-main").style.display = "none";
-    document.getElementById("menu-setup").style.display = "flex";
+    document.getElementById("menu-main").classList.add("hidden");
+    document.getElementById("menu-setup").classList.remove("hidden");
     this.renderSetup();
-    this.renderRuleOptions();
-    this.renderQuickStartMixedLevel();
   },
 
   hideSetup() {
-    document.getElementById("menu-setup").style.display = "none";
-    document.getElementById("menu-main").style.display = "flex";
-    this.renderQuickStartMixedLevel();
+    document.getElementById("menu-setup").classList.add("hidden");
+    document.getElementById("menu-main").classList.remove("hidden");
+    this.renderStart();
   },
 
-  renderQuickStartMixedLevel() {
-    const chip = document.getElementById("quick-mixed-level");
-    if (!chip) return;
-    const info = AI_LEVEL_INFO[game.quickStartMixedLevel];
-    chip.innerText = info ? info.label : `AI-${game.quickStartMixedLevel}`;
-  },
+  renderStart() {
+    const presetList = document.getElementById("quick-start-list");
+    const summary = document.getElementById("setup-summary");
+    if (!presetList || !summary) return;
 
-  renderSetup() {
-    const container = document.getElementById("setup-container");
-    container.innerHTML = "";
-    const compactLabel = window.innerWidth < 620;
-    PLAYER_PRESETS.forEach((preset, idx) => {
-      const row = document.createElement("div");
-      row.className = "setup-row";
-      const state = game.setupState[idx];
-      const animal = ANIMAL_OPTIONS[game.playerAnimalIndices[idx]] || ANIMAL_OPTIONS[0];
-      const btnClass = state === "HUMAN"
-        ? "state-human"
-        : state === "OFF"
-          ? "state-off"
-          : state === "AI-6"
-            ? "state-ai-6"
-            : "state-ai";
-      row.innerHTML = `
-        <div class="setup-player">
-          <div class="setup-icon">${animal.icon}</div>
-          <div>
-            <div style="font-size:1rem;">${animal.name}</div>
-            <div style="font-size:0.82rem; color:#7a6e63;">P${idx + 1}</div>
-          </div>
+    presetList.innerHTML = "";
+    QUICK_PRESETS.forEach((preset) => {
+      const button = document.createElement("button");
+      button.className = `preset-card ${preset.enabled ? "enabled" : "disabled"}`;
+      button.disabled = !preset.enabled;
+      button.innerHTML = `
+        <div class="preset-top">
+          <div class="preset-title">${preset.label}</div>
+          <div class="preset-chip">${preset.subtitle}</div>
         </div>
-        <div class="setup-actions">
-          <button class="state-btn animal-btn">${animal.icon} 동물 변경</button>
-          <button class="state-btn ${btnClass}">${getSetupStateLabel(state, compactLabel)}</button>
-        </div>
+        <div class="preset-detail">${preset.detail}</div>
       `;
-      const buttons = row.querySelectorAll("button");
-      buttons[0].onclick = () => game.cyclePlayerAnimal(idx);
-      buttons[1].onclick = () => game.cycleSetupState(idx);
-      container.appendChild(row);
+      if (preset.enabled) {
+        button.onclick = () => game.applyPreset(preset.key);
+      }
+      presetList.appendChild(button);
     });
-  },
 
-  renderRuleOptions() {
-    const renderTo = (containerId) => {
-      const container = document.getElementById(containerId);
-      if (!container) return;
-      container.innerHTML = "";
-
-      const options = [
-        {
-          key: "jokers",
-          icon: "🃏",
-          name: "조커 2장 사용",
-          desc: "가방에 조커 2장을 추가합니다.",
-          value: game.ruleOptions.jokers
-        },
-        {
-          key: "initial30",
-          icon: "30",
-          name: "초기 30점 등록",
-          desc: "첫 성공 턴에는 자기 손패만으로 30점 이상을 내려야 합니다.",
-          value: game.ruleOptions.initial30
-        },
-        {
-          key: "hintLimit",
-          icon: "💡",
-          name: "힌트 횟수 제한",
-          desc: "0개, 3개, 5개, 무제한 중에서 선택합니다.",
-          valueLabel: getHintLimitLabel(game.ruleOptions.hintLimit),
-          cycle: true
-        }
-      ];
-
-      options.forEach(option => {
-        const row = document.createElement("div");
-        row.className = "setup-row";
-        row.innerHTML = `
-          <div class="setup-player">
-            <div class="setup-icon">${option.icon}</div>
-            <div>
-              <div style="font-size:1rem;">${option.name}</div>
-              <div style="font-size:0.82rem; color:#7a6e63;">${option.desc}</div>
-            </div>
-          </div>
-          <button class="state-btn ${option.cycle ? "state-ai" : (option.value ? "state-on" : "state-off-option")}">${option.cycle ? option.valueLabel : (option.value ? "ON" : "OFF")}</button>
-        `;
-        row.querySelector("button").onclick = () => option.cycle
-          ? game.cycleHintLimit()
-          : game.toggleRuleOption(option.key);
-        container.appendChild(row);
-      });
-    };
-
-    renderTo("rule-options-main");
-    renderTo("rule-options-setup");
-  },
-
-  tileHtml(tile, small = false, selected = false, drawn = false, extraClasses = "") {
-    const isJoker = !!tile.joker;
-    const colorClass = isJoker ? "joker" : tile.color;
-    const numText = isJoker ? "J" : tile.number;
-    const icon = isJoker ? "🃏" : (COLORS.find(color => color.key === tile.color)?.icon || "");
-    return `
-      <div class="tile ${colorClass} ${small ? "small" : ""} ${selected ? "selected" : ""} ${drawn ? "drawn" : ""} ${extraClasses}">
-        <div class="tile-num">${numText}</div>
-        <div class="tile-icon">${icon}</div>
-      </div>
+    summary.innerHTML = `
+      <div class="setup-summary-title">현재 설정</div>
+      <div class="setup-summary-body">${buildSetupSummary(game.setupPlayers)}</div>
     `;
   },
 
-  renderPlayers() {
-    const list = document.getElementById("player-list");
-    list.innerHTML = "";
-    game.players.forEach((player, idx) => {
-      const card = document.createElement("div");
-      card.className = `player-card ${idx === game.turn ? "active" : ""}`;
-      const badgeText = player.type === "HUMAN" ? "HUMAN" : getSetupStateLabel(`AI-${player.aiLevel}`, window.innerWidth < 620);
-      const lastLog = player.logs[0] || "아직 행동 기록 없음";
-      const openText = game.ruleOptions.initial30
-        ? (player.opened ? "30 등록 완료" : "30 등록 전")
-        : "기본 룰";
+  renderSetup() {
+    const playerList = document.getElementById("setup-player-list");
+    const optionList = document.getElementById("setup-option-list");
+    if (!playerList || !optionList) return;
 
-      card.innerHTML = `
-        <div class="p-top">
-          <div class="p-left">
-            <div class="p-icon">${player.icon}</div>
-            <div>
-              <div class="p-name">${player.name}</div>
-              <div class="p-sub">P${player.slot + 1}</div>
-            </div>
+    playerList.innerHTML = "";
+    PLAYER_ORDER.forEach((colorKey) => {
+      const player = PLAYER_INFO[colorKey];
+      const state = game.setupPlayers[colorKey];
+      const row = document.createElement("div");
+      row.className = "setup-row";
+      row.innerHTML = `
+        <div class="setup-main">
+          <div class="setup-icon ${colorKey}">${player.icon}</div>
+          <div>
+            <div class="setup-title">${player.label} / ${player.korean}</div>
+            <div class="setup-desc">${getSetupStateDescription(state)}</div>
           </div>
-          <div class="p-badge">${badgeText}</div>
         </div>
-        <div class="p-stats">
-          <div class="mini-chip">손패 ${player.rack.length}장</div>
-          <div class="mini-chip">${idx === game.turn ? "현재 턴" : "대기 중"}</div>
-          <div class="mini-chip">${openText}</div>
-        </div>
-        <div class="mini-log">${lastLog}</div>
+        <button class="state-btn ${isAiState(state) ? "ai" : "human"}">${getSetupStateLabel(state)}</button>
       `;
-      card.style.borderLeftColor = idx === game.turn ? "var(--accent)" : player.accent;
-      list.appendChild(card);
+      row.querySelector("button").onclick = () => game.cycleSetupState(colorKey);
+      playerList.appendChild(row);
+    });
+
+    const labelMode = PIECE_LABEL_MODES.find((entry) => entry.key === game.pieceLabelMode) || PIECE_LABEL_MODES[0];
+    const orientation = BOARD_ORIENTATION_OPTIONS.find((entry) => entry.key === game.boardOrientation) || BOARD_ORIENTATION_OPTIONS[0];
+    const options = [
+      {
+        title: "기물 표시",
+        desc: "동물명, 체스명, 병기 모드 중 하나를 선택합니다.",
+        buttonLabel: labelMode.label,
+        action: () => game.cyclePieceLabelMode()
+      },
+      {
+        title: "보드 방향",
+        desc: "게임 화면에서 기본 보드 방향을 정합니다.",
+        buttonLabel: orientation.label,
+        action: () => game.cycleBoardOrientationSetting()
+      }
+    ];
+
+    optionList.innerHTML = "";
+    options.forEach((option) => {
+      const row = document.createElement("div");
+      row.className = "setup-row";
+      row.innerHTML = `
+        <div class="setup-main">
+          <div class="setup-icon option">♟</div>
+          <div>
+            <div class="setup-title">${option.title}</div>
+            <div class="setup-desc">${option.desc}</div>
+          </div>
+        </div>
+        <button class="state-btn option">${option.buttonLabel}</button>
+      `;
+      row.querySelector("button").onclick = option.action;
+      optionList.appendChild(row);
+    });
+
+    this.updateSetupStartButton();
+  },
+
+  updateSetupStartButton() {
+    const button = document.getElementById("btn-start-match");
+    if (!button) return;
+
+    const playable = game.isSetupPlayableNow();
+    button.disabled = !playable;
+    button.innerText = playable
+      ? "사람 vs 사람 대국 시작"
+      : "AI 대국은 다음 단계에서 연결";
+  },
+
+  renderPlayerPanels() {
+    const container = document.getElementById("player-panel-list");
+    if (!container) return;
+    container.innerHTML = "";
+
+    PLAYER_ORDER.forEach((colorKey) => {
+      const player = PLAYER_INFO[colorKey];
+      const currentTurn = game.currentState && getPlayerColorKey(game.currentState.turn) === colorKey;
+      const inCheck = game.currentStatus?.inCheck && currentTurn;
+      const type = game.getConfiguredPlayerType(colorKey);
+
+      const card = document.createElement("div");
+      card.className = `player-card ${currentTurn ? "active" : ""}`;
+      card.style.borderColor = player.accent;
+      card.innerHTML = `
+        <div class="player-card-top">
+          <div>
+            <div class="player-name">${player.label} / ${player.korean}</div>
+            <div class="player-sub">${getSetupStateLabel(type, true)}</div>
+          </div>
+          <div class="player-badge ${colorKey}">${currentTurn ? "현재 차례" : "대기 중"}</div>
+        </div>
+        <div class="player-meta">${inCheck ? "체크 상태" : "정상 상태"}</div>
+      `;
+      container.appendChild(card);
     });
   },
 
-  renderTable() {
-    const tableArea = document.getElementById("table-area");
-    tableArea.innerHTML = "";
+  renderThemeLegend() {
+    const container = document.getElementById("theme-legend");
+    if (!container) return;
+    container.innerHTML = "";
 
-    if (game.workingTable.length === 0) {
-      const empty = document.createElement("div");
-      empty.className = "empty-table";
-      empty.innerHTML = "중앙 테이블이 비어 있어요.<br />손패나 테이블 타일을 선택한 뒤 <strong>새 줄</strong> / <strong>줄에 추가</strong>로 조합을 만들어 보세요.";
-      tableArea.appendChild(empty);
+    Object.entries(PIECE_THEME).forEach(([pieceType, info]) => {
+      const item = document.createElement("div");
+      item.className = "legend-item";
+      item.innerHTML = `
+        <div class="legend-emoji">${info.emoji}</div>
+        <div class="legend-label">${getPieceDisplayLabel(pieceType, game.pieceLabelMode)}</div>
+      `;
+      container.appendChild(item);
+    });
+  },
+
+  renderBoard() {
+    const boardShell = document.getElementById("board-grid");
+    const turnChip = document.getElementById("turn-chip");
+    const lastMoveChip = document.getElementById("last-move-chip");
+    const claimChip = document.getElementById("claim-chip");
+    const boardNote = document.getElementById("board-note");
+    const statusLine = document.getElementById("status-line");
+
+    if (!boardShell) return;
+
+    statusLine.innerText = game.getStatusBanner();
+    boardNote.innerText = game.getBoardNote();
+    turnChip.innerText = `차례 ${game.currentState ? getPlayerLabel(game.getTurnColorKey()) : "-"}`;
+    lastMoveChip.innerText = `마지막 수 ${game.lastMove ? game.lastMove.san : "-"}`;
+    claimChip.innerText = game.canClaimDraw() ? game.getClaimDrawLabel() : "무승부 없음";
+    claimChip.classList.toggle("muted", !game.canClaimDraw());
+
+    if (!game.currentState) {
+      boardShell.innerHTML = `<div class="board-empty">대국을 시작하면 8x8 체스보드가 표시됩니다.</div>`;
       return;
     }
 
-    game.workingTable.forEach((group, index) => {
-      const result = RummyRules.analyzeGroup(group);
-      const badgeClass = result.valid ? "badge-ok" : result.ready ? "badge-bad" : "badge-warn";
-      const stateClass = result.valid ? "valid" : result.ready ? "invalid" : "";
-      const hintTarget = game.lastHint?.targetGroupIndices?.includes(index) ? "hint-target" : "";
-      const card = document.createElement("div");
-      card.className = `group-card ${stateClass} ${game.selectedGroupIndex === index ? "selected" : ""} ${hintTarget}`;
-      card.onclick = () => game.selectGroup(index);
+    const fileOrder = game.boardOrientation === "white"
+      ? [...ChessState.FILES]
+      : [...ChessState.FILES].reverse();
+    const rankOrder = game.boardOrientation === "white"
+      ? [8, 7, 6, 5, 4, 3, 2, 1]
+      : [1, 2, 3, 4, 5, 6, 7, 8];
 
-      const meta = document.createElement("div");
-      meta.className = "group-meta";
-      meta.innerHTML = `<strong>줄 ${index + 1}</strong><span class="group-badge ${badgeClass}">${result.label}</span>`;
+    const board = document.createElement("div");
+    board.className = "board-grid";
 
-      const row = document.createElement("div");
-      row.className = "tile-row";
-      group.forEach(tile => {
-        const wrapper = document.createElement("div");
-        const hintClass = game.lastHint?.tableTileIds?.includes(tile.id) ? "hint-source" : "";
-        wrapper.innerHTML = this.tileHtml(tile, true, game.selectedTableIds.has(tile.id), false, hintClass);
-        const tileEl = wrapper.firstElementChild;
-        tileEl.onclick = (event) => {
-          event.stopPropagation();
-          game.toggleTableTile(tile.id, index);
-        };
-        row.appendChild(tileEl);
+    rankOrder.forEach((rankNum, rowIndex) => {
+      fileOrder.forEach((fileChar, colIndex) => {
+        const square = `${fileChar}${rankNum}`;
+        const index = ChessState.squareToIndex(square);
+        const fileIndex = ChessState.FILES.indexOf(fileChar);
+        const isDark = (fileIndex + rankNum) % 2 === 1;
+        const piece = game.currentState.board[index];
+        const pieceColor = piece ? ChessState.pieceColor(piece) : null;
+        const targetMoves = game.legalTargets.filter((move) => move.to === index);
+        const isCaptureTarget = targetMoves.some((move) => move.flags.capture || move.flags.enPassant);
+        const isSelected = game.selectedSquare === index;
+        const isLastFrom = game.lastMove && ChessState.squareToIndex(game.lastMove.from) === index;
+        const isLastTo = game.lastMove && ChessState.squareToIndex(game.lastMove.to) === index;
+        const isCheckSquare = game.checkSquare === index;
+        const button = document.createElement("button");
+
+        button.className = [
+          "square",
+          isDark ? "dark" : "light",
+          isSelected ? "selected" : "",
+          targetMoves.length > 0 ? "legal-target" : "",
+          isCaptureTarget ? "capture-target" : "",
+          isLastFrom ? "last-from" : "",
+          isLastTo ? "last-to" : "",
+          isCheckSquare ? "in-check" : ""
+        ].filter(Boolean).join(" ");
+        button.onclick = () => game.handleSquareClick(index);
+        button.disabled = game.isGameOver();
+
+        if (colIndex === 0) {
+          const rankLabel = document.createElement("span");
+          rankLabel.className = "coord rank";
+          rankLabel.innerText = String(rankNum);
+          button.appendChild(rankLabel);
+        }
+
+        if (rowIndex === rankOrder.length - 1) {
+          const fileLabel = document.createElement("span");
+          fileLabel.className = "coord file";
+          fileLabel.innerText = fileChar;
+          button.appendChild(fileLabel);
+        }
+
+        if (piece) {
+          button.appendChild(this.createPieceNode(piece, pieceColor));
+        } else if (targetMoves.length > 0) {
+          const target = document.createElement("span");
+          target.className = isCaptureTarget ? "capture-ring" : "target-dot";
+          button.appendChild(target);
+        }
+
+        board.appendChild(button);
       });
-
-      card.appendChild(meta);
-      card.appendChild(row);
-      tableArea.appendChild(card);
     });
+
+    boardShell.innerHTML = "";
+    boardShell.appendChild(board);
   },
 
-  renderRack() {
-    const rackRow = document.getElementById("rack-row");
-    rackRow.innerHTML = "";
-    if (!game.currentPlayer) return;
+  createPieceNode(piece, pieceColor) {
+    const wrapper = document.createElement("div");
+    wrapper.className = `piece ${pieceColor === "w" ? "white" : "black"}`;
+    wrapper.innerHTML = `
+      <div class="piece-emoji">${getPieceEmoji(piece)}</div>
+      <div class="piece-label">${getPieceDisplayLabel(piece, game.pieceLabelMode)}</div>
+    `;
+    return wrapper;
+  },
 
-    const isAI = game.currentPlayer.type === "AI";
-    game.currentPlayer.rack.forEach(tile => {
-      const wrapper = document.createElement("div");
-      if (isAI) {
-        wrapper.innerHTML = `
-          <div class="tile facedown ${game.currentPlayer.rack.length > 10 ? "small" : ""}">
-            <div class="tile-num">?</div>
-            <div class="tile-icon">🂠</div>
-          </div>
-        `;
-        rackRow.appendChild(wrapper.firstElementChild);
+  renderInfoPanel() {
+    const panel = document.getElementById("info-panel");
+    if (!panel) return;
+
+    const info = game.getInfoPanelContent();
+    panel.innerHTML = `
+      <div class="info-title">${info.title}</div>
+      ${info.paragraphs.map((paragraph) => `<div class="info-line">${paragraph}</div>`).join("")}
+    `;
+  },
+
+  renderCapturedPieces() {
+    const whiteContainer = document.getElementById("captured-white");
+    const blackContainer = document.getElementById("captured-black");
+    if (!whiteContainer || !blackContainer) return;
+
+    const renderList = (container, items) => {
+      container.innerHTML = "";
+      if (items.length === 0) {
+        container.innerHTML = `<div class="capture-empty">없음</div>`;
         return;
       }
 
-      const hintClass = game.lastHint?.rackTileIds?.includes(tile.id) ? "hint" : "";
-      wrapper.innerHTML = this.tileHtml(tile, false, game.selectedRackIds.has(tile.id), game.drawnTileId === tile.id, hintClass);
-      const tileEl = wrapper.firstElementChild;
-      tileEl.onclick = () => game.toggleRackTile(tile.id);
-      rackRow.appendChild(tileEl);
-    });
+      items.forEach((pieceType) => {
+        const chip = document.createElement("div");
+        chip.className = "capture-chip";
+        chip.innerHTML = `<span>${getPieceEmoji(pieceType)}</span><span>${getPieceDisplayLabel(pieceType, game.pieceLabelMode)}</span>`;
+        container.appendChild(chip);
+      });
+    };
 
-    if (game.currentPlayer.rack.length === 0) {
-      const empty = document.createElement("div");
-      empty.className = "chip";
-      empty.innerText = "손패가 비었습니다.";
-      rackRow.appendChild(empty);
-    }
+    renderList(whiteContainer, game.capturedWhite);
+    renderList(blackContainer, game.capturedBlack);
   },
 
-  setInfo(title, text, allowHtml = false) {
-    document.getElementById("info-title").innerText = title;
-    document.getElementById("info-text")[allowHtml ? "innerHTML" : "innerText"] = text;
-  },
-  showHint(hint) {
-    const parts = [];
-    const steps = Array.isArray(hint.steps) ? hint.steps : [];
-    if (hint.searchTruncated && hint.truncationNote) {
-      parts.push(`<div class="hint-reason">${hint.truncationNote}</div>`);
-    }
-    const labelParts = [hint.shortText, hint.summary]
-      .filter(Boolean)
-      .filter((value, index, list) => list.indexOf(value) === index);
+  renderMoveList() {
+    const container = document.getElementById("move-list");
+    if (!container) return;
+    container.innerHTML = "";
 
-    if (labelParts.length > 0) {
-      parts.push(`<div class="hint-summary">${labelParts.join(" · ")}</div>`);
+    if (game.moveHistory.length === 0) {
+      container.innerHTML = `<div class="move-empty">첫 수를 기다리는 중입니다.</div>`;
+      return;
     }
-    if (hint.leadText) {
-      parts.push(`<div class="hint-summary">${hint.leadText}</div>`);
-    }
-    if (hint.reason) {
-      parts.push(`<div class="hint-reason">${hint.reason}</div>`);
-    }
-    if (hint.openingBreakdown && hint.openingBreakdown.length > 0) {
-      parts.push(`<div class="hint-reason">${hint.openingBreakdown.join("<br>")}</div>`);
-    }
-    if (hint.futureBenefit) {
-      parts.push(`<div class="hint-reason">${hint.futureBenefit}</div>`);
-    }
-    steps.forEach((step, index) => {
-      parts.push(`<div class="hint-step">${index + 1}. ${step}</div>`);
+
+    const rows = groupHistoryByMove(game.moveHistory);
+    const lastSan = game.lastMove?.san || null;
+    rows.forEach((row) => {
+      const item = document.createElement("div");
+      item.className = "move-row";
+      item.innerHTML = `
+        <div class="move-number">${row.moveNumber}.</div>
+        <div class="move-cell ${row.white?.san === lastSan ? "active" : ""}">${row.white?.san || ""}</div>
+        <div class="move-cell ${row.black?.san === lastSan ? "active" : ""}">${row.black?.san || ""}</div>
+      `;
+      container.appendChild(item);
     });
-    this.setInfo(hint.title || "힌트", parts.join(""), true);
+  },
+
+  renderPromotionModal() {
+    const modal = document.getElementById("promotion-modal");
+    const options = document.getElementById("promotion-options");
+    if (!modal || !options) return;
+
+    if (!game.pendingPromotion) {
+      modal.classList.add("hidden");
+      options.innerHTML = "";
+      return;
+    }
+
+    modal.classList.remove("hidden");
+    options.innerHTML = "";
+    game.pendingPromotion.moves.forEach((move) => {
+      const button = document.createElement("button");
+      button.className = "promotion-btn";
+      button.innerHTML = `
+        <div class="promotion-emoji">${getPieceEmoji(move.promotion)}</div>
+        <div class="promotion-label">${getPieceDisplayLabel(move.promotion, game.pieceLabelMode)}</div>
+      `;
+      button.onclick = () => game.applyPromotionChoice(move.promotion);
+      options.appendChild(button);
+    });
+  },
+
+  renderResultModal() {
+    const modal = document.getElementById("result-modal");
+    const title = document.getElementById("result-title");
+    const text = document.getElementById("result-text");
+    if (!modal || !title || !text) return;
+
+    const summary = game.getResultSummary();
+    if (!summary) {
+      modal.classList.add("hidden");
+      return;
+    }
+
+    title.innerText = summary.title;
+    text.innerText = summary.text;
+    modal.classList.remove("hidden");
   },
 
   updateButtons() {
-    const ids = [
-      "btn-sort-color",
-      "btn-sort-number",
-      "btn-new-group",
-      "btn-append-group",
-      "btn-clear-select",
-      "btn-undo-action",
-      "btn-request-hint",
-      "btn-draw-tile",
-      "btn-end-turn"
-    ];
-
-    ids.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.disabled = false;
-    });
-
-    if (game.inputLocked) {
-      ids.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.disabled = true;
-      });
-      return;
+    const undoButton = document.getElementById("btn-undo-move");
+    const drawButton = document.getElementById("btn-claim-draw");
+    const hintButton = document.getElementById("btn-hint");
+    if (undoButton) undoButton.disabled = !game.canUndo();
+    if (drawButton) {
+      drawButton.disabled = !game.canClaimDraw();
+      drawButton.innerText = game.canClaimDraw() ? game.getClaimDrawLabel() : "무승부 확인";
     }
-
-    if (!game.currentPlayer || game.gameOver || game.currentPlayer.type !== "HUMAN") {
-      ids.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.disabled = true;
-      });
-      return;
-    }
-
-    const hasSelection = game.getTotalSelectedCount() > 0;
-    const hasGroup = game.selectedGroupIndex !== null;
-    const hasAction = game.actionHistory.length > 0;
-    const canAutoRestoreDraw = hasAction && !game.hasReducedRackThisTurn();
-    const hintButton = document.getElementById("btn-request-hint");
-    if (hintButton) {
-      const hintLimit = game.ruleOptions.hintLimit;
-      const hintRemaining = game.currentPlayer?.hintsRemaining;
-      hintButton.innerText = hintLimit === null
-        ? "💡 힌트"
-        : `💡 힌트 ${hintRemaining}/${hintLimit}`;
-    }
-
-    if (game.drewTileThisTurn) {
-      [
-        "btn-sort-color",
-        "btn-sort-number",
-        "btn-new-group",
-        "btn-append-group",
-        "btn-clear-select",
-        "btn-undo-action",
-        "btn-request-hint",
-        "btn-draw-tile"
-      ].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.disabled = true;
-      });
-      document.getElementById("btn-end-turn").disabled = false;
-      return;
-    }
-
-    document.getElementById("btn-new-group").disabled = !hasSelection;
-    document.getElementById("btn-append-group").disabled = !(hasSelection && hasGroup);
-    document.getElementById("btn-clear-select").disabled = !(hasSelection || hasGroup);
-    document.getElementById("btn-undo-action").disabled = !hasAction;
-    document.getElementById("btn-request-hint").disabled = !game.canUseHint();
-    document.getElementById("btn-draw-tile").disabled = (hasAction && !canAutoRestoreDraw) || game.bag.length === 0;
-    document.getElementById("btn-end-turn").disabled = !hasAction;
+    if (hintButton) hintButton.disabled = false;
   },
 
   updateAll() {
-    if (!game.currentPlayer) return;
-
-    document.getElementById("bag-count").innerText = game.bag.length;
-    document.getElementById("turn-label").innerText = `${game.currentPlayer.icon} ${game.currentPlayer.name}`;
-    document.getElementById("rack-owner").innerText = game.currentPlayer.name;
-    document.getElementById("selected-count").innerText = game.getTotalSelectedCount();
-    document.getElementById("selection-label").innerText = game.getTotalSelectedCount() > 0
-      ? `${game.getTotalSelectedCount()}장 선택 중`
-      : "선택 없음";
-    document.getElementById("group-label").innerText = game.selectedGroupIndex !== null
-      ? `줄 ${game.selectedGroupIndex + 1}`
-      : "선택 줄 없음";
-    document.getElementById("rule-joker-chip").innerText = game.ruleOptions.jokers ? "조커 ON" : "조커 OFF";
-    document.getElementById("rule-open-chip").innerText = game.ruleOptions.initial30 ? "30룰 ON" : "30룰 OFF";
-
-    this.renderPlayers();
-    this.renderTable();
-    this.renderRack();
+    this.renderStart();
+    this.renderSetup();
+    this.renderPlayerPanels();
+    this.renderThemeLegend();
+    this.renderBoard();
+    this.renderInfoPanel();
+    this.renderCapturedPieces();
+    this.renderMoveList();
+    this.renderPromotionModal();
+    this.renderResultModal();
     this.updateButtons();
   },
 
   toast(message) {
-    const el = document.getElementById("toast");
-    el.innerText = message;
-    el.classList.add("show");
+    const node = document.getElementById("toast");
+    if (!node) return;
+    node.innerText = message;
+    node.classList.add("show");
     clearTimeout(this.toastTimer);
-    this.toastTimer = setTimeout(() => el.classList.remove("show"), 1500);
+    this.toastTimer = setTimeout(() => {
+      node.classList.remove("show");
+    }, 2200);
   }
 };

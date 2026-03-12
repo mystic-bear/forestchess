@@ -1,46 +1,79 @@
 const deepCopy = (value) => JSON.parse(JSON.stringify(value));
+
+const isAiState = (state) => typeof state === "string" && state.startsWith("AI-");
+
+const getAiLevelFromState = (state) => {
+  if (!isAiState(state)) return null;
+  return Number(String(state).split("-")[1]) || null;
+};
+
 const getSetupStateLabel = (state, compact = false) => {
-  if (state === "HUMAN" || state === "OFF") return state;
-  const level = Number(String(state).split("-")[1]);
+  if (state === "HUMAN") return compact ? "사람" : "사람 플레이어";
+  const level = getAiLevelFromState(state);
   const info = AI_LEVEL_INFO[level];
   return compact ? (info?.short || state) : (info?.label || state);
 };
-const calculateInitialOpenScore = (groups) => groups.reduce((sum, group) => sum + (RummyRules.analyzeGroup(group).score || 0), 0);
-const isInitialOpenSatisfied = (groups) => groups.length > 0 && calculateInitialOpenScore(groups) >= 30;
-const normalizeGroupTiles = (group) => {
-  const colorOrder = { red: 0, blue: 1, yellow: 2, black: 3, joker: 4 };
-  const non = group.filter(tile => !tile.joker);
-  const jokers = group.filter(tile => tile.joker);
-  if (non.length === 0) return [...jokers];
 
-  const sameColor = non.every(tile => tile.color === non[0].color);
-  const sameNumber = non.every(tile => tile.number === non[0].number);
-
-  if (sameColor) {
-    return [...non].sort((a, b) => a.number - b.number || a.id - b.id).concat(jokers);
-  }
-
-  if (sameNumber) {
-    return [...non].sort((a, b) => colorOrder[a.color] - colorOrder[b.color] || a.id - b.id).concat(jokers);
-  }
-
-  return [...group];
+const getSetupStateDescription = (state) => {
+  if (state === "HUMAN") return "직접 둘 수 있습니다.";
+  const level = getAiLevelFromState(state);
+  const info = AI_LEVEL_INFO[level];
+  return info ? `${info.desc} · 다음 단계에서 연결` : "AI 연결 준비 중";
 };
-const normalizeTableGroups = (table) => table.map(group => normalizeGroupTiles(group)).filter(group => group.length > 0);
-const serializeTableState = (table) => table
-  .map(group => normalizeGroupTiles(group).map(tile => tile.id).sort((a, b) => a - b).join("-"))
-  .sort()
-  .join("|");
-const getColorIcon = (colorKey) => COLORS.find(color => color.key === colorKey)?.icon || "";
-const formatTileText = (tile) => tile?.joker ? "조커🃏" : `${tile?.number}${getColorIcon(tile?.color)}`;
-const formatTileList = (tiles) => tiles.map(tile => formatTileText(tile)).join(", ");
-const findGroupIndicesByTileIds = (table, groupTileIdsList) => {
-  const indices = [];
-  groupTileIdsList.forEach(groupTileIds => {
-    if (!groupTileIds || groupTileIds.length === 0) return;
-    const idSet = new Set(groupTileIds);
-    const index = table.findIndex(group => group.every(tile => idSet.has(tile.id)) && group.length === idSet.size);
-    if (index >= 0 && !indices.includes(index)) indices.push(index);
-  });
-  return indices;
+
+const getPieceTypeFromCode = (pieceOrType) => {
+  if (!pieceOrType) return null;
+  if (typeof pieceOrType !== "string") return null;
+  return pieceOrType.length === 1 ? pieceOrType.toLowerCase() : pieceOrType.toLowerCase();
 };
+
+const getPieceThemeInfo = (pieceOrType) => PIECE_THEME[getPieceTypeFromCode(pieceOrType)] || null;
+
+const getPieceEmoji = (pieceOrType) => getPieceThemeInfo(pieceOrType)?.emoji || "";
+
+const getPieceDisplayLabel = (pieceOrType, mode = "both") => {
+  const info = getPieceThemeInfo(pieceOrType);
+  if (!info) return "";
+  if (mode === "animal") return info.animal;
+  if (mode === "chess") return info.chess;
+  return `${info.animal}(${info.chess})`;
+};
+
+const getPlayerColorKey = (turn) => (turn === "w" ? "white" : "black");
+
+const getPlayerLabel = (colorKey) => {
+  const info = PLAYER_INFO[colorKey];
+  return info ? `${info.label} / ${info.korean}` : colorKey;
+};
+
+const cycleOptionKey = (options, currentKey) => {
+  const index = options.findIndex((option) => option.key === currentKey);
+  const nextIndex = index >= 0 ? (index + 1) % options.length : 0;
+  return options[nextIndex].key;
+};
+
+const groupHistoryByMove = (history) => {
+  const rows = [];
+  for (let i = 0; i < history.length; i += 2) {
+    rows.push({
+      moveNumber: Math.floor(i / 2) + 1,
+      white: history[i] || null,
+      black: history[i + 1] || null
+    });
+  }
+  return rows;
+};
+
+const formatStatusReason = (status) => {
+  if (!status) return "";
+  if (status.reason === "checkmate") return "체크메이트";
+  if (status.reason === "stalemate") return "스테일메이트";
+  if (status.reason === "insufficient-material") return "기물 부족 무승부";
+  if (status.reason === "threefold-repetition") return "3회 반복 무승부 가능";
+  if (status.reason === "fifty-move-rule") return "50수 룰 무승부 가능";
+  return "";
+};
+
+const buildSetupSummary = (setupPlayers) => (
+  PLAYER_ORDER.map((colorKey) => `${PLAYER_INFO[colorKey].korean}: ${getSetupStateLabel(setupPlayers[colorKey], true)}`).join(" · ")
+);
