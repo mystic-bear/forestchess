@@ -14,6 +14,12 @@ Track archive, post-game analysis, review cards, play-from-here, and legacy-isol
 
 ## Resolved issues
 
+- 2026-03-12 18:06
+  - Symptom: `AI-5` to `AI-7` were still too close to full-strength Stockfish, and `AI-7` overshot the intended "2000 challenge" feel.
+  - Cause: All levels were still driven mainly by `Skill Level` and `movetime`, while upper levels had no Elo cap and weaker levels had no clear split from the stronger profiles.
+  - Fix: Reworked the level model into two bands. `AI-1` to `AI-4` now stay on `weak_multipv` with weighted candidate selection, while `AI-5` to `AI-7` use `UCI_LimitStrength + UCI_Elo`. Added cp-gap filtering so `AI-5` uses an `80/20` top-two split only when the second move is close enough, `AI-6` uses `90/10`, and `AI-7` stays on the top line. Kept coach and review analysis on `limitStrength: false`.
+  - Result: Higher levels now align better with their public labels, while the coach remains at the current strong analysis quality.
+
 - 2026-03-12 17:39
   - Symptom: `AI-1` to `AI-3` still felt too strong because they played like short-search Stockfish rather than beginner opponents.
   - Cause: Difficulty differences were driven almost entirely by `movetime` and `skillLevel`, while `chooseMove` still returned the engine's top line directly.

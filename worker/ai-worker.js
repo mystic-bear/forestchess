@@ -212,15 +212,31 @@
       };
     }
 
+    let rankedCandidates = candidates;
+    if (Number.isFinite(profile?.maxCpGapFromBest) && candidates.length > 1) {
+      const best = candidates[0];
+      if (best.scoreMate != null) {
+        rankedCandidates = [best];
+      } else if (Number.isFinite(best.scoreCp)) {
+        const narrowed = candidates.filter((candidate, index) => {
+          if (index === 0) return true;
+          if (candidate.scoreMate != null) return false;
+          if (!Number.isFinite(candidate.scoreCp)) return false;
+          return (best.scoreCp - candidate.scoreCp) <= profile.maxCpGapFromBest;
+        });
+        rankedCandidates = narrowed.length > 0 ? narrowed : [best];
+      }
+    }
+
     const game = ChessRules.createGame({ fen });
-    const safeCandidates = candidates.filter((candidate) => {
+    const safeCandidates = rankedCandidates.filter((candidate) => {
       const risk = evaluateImmediateRisk(game, candidate.uci);
       if (profile.avoidMateInOne && risk.mateInOne) return false;
       if (Number.isFinite(profile.maxImmediateNetLoss) && risk.maxImmediateNetLoss >= profile.maxImmediateNetLoss) return false;
       return true;
     });
 
-    const pool = safeCandidates.length > 0 ? safeCandidates : candidates;
+    const pool = safeCandidates.length > 0 ? safeCandidates : rankedCandidates;
     const selected = pickWeightedCandidate(pool, profile.choiceWeights);
     if (!selected) return analysis;
 
@@ -304,6 +320,8 @@
     const analysis = await session.analyzePosition({
       fen,
       movetime: profile.movetime,
+      limitStrength: profile.limitStrength,
+      uciElo: profile.uciElo,
       skillLevel: profile.skillLevel,
       multipv: profile.multipv || 1,
       onInfo: (info) => {
@@ -386,6 +404,7 @@
     const analysis = await session.analyzePosition({
       fen,
       movetime: COACH_PROFILE.movetime,
+      limitStrength: COACH_PROFILE.limitStrength,
       skillLevel: COACH_PROFILE.skillLevel,
       multipv: COACH_PROFILE.multipv,
       onInfo: (info, multipv) => {
@@ -475,6 +494,7 @@
       const beforeAnalysis = await session.analyzePosition({
         fen: entry.fenBefore,
         movetime: REVIEW_PROFILE.movetime,
+        limitStrength: REVIEW_PROFILE.limitStrength,
         skillLevel: REVIEW_PROFILE.skillLevel,
         multipv: REVIEW_PROFILE.multipv
       });
@@ -482,6 +502,7 @@
       const afterAnalysis = await session.analyzePosition({
         fen: entry.fenAfter,
         movetime: afterMoveTime,
+        limitStrength: REVIEW_PROFILE.limitStrength,
         skillLevel: REVIEW_PROFILE.skillLevel,
         multipv: 1
       });

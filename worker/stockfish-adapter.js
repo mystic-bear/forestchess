@@ -374,6 +374,12 @@
       await this.init();
 
       const commands = [];
+      if (typeof options.limitStrength === "boolean" && this.lastOptions.limitStrength !== options.limitStrength) {
+        commands.push(`setoption name UCI_LimitStrength value ${options.limitStrength ? "true" : "false"}`);
+      }
+      if (Number.isInteger(options.uciElo) && this.lastOptions.uciElo !== options.uciElo) {
+        commands.push(`setoption name UCI_Elo value ${options.uciElo}`);
+      }
       if (Number.isInteger(options.skillLevel) && this.lastOptions.skillLevel !== options.skillLevel) {
         commands.push(`setoption name Skill Level value ${options.skillLevel}`);
       }
@@ -394,6 +400,8 @@
       if (commands.length > 0) {
         this.lastOptions = {
           ...this.lastOptions,
+          limitStrength: typeof options.limitStrength === "boolean" ? options.limitStrength : this.lastOptions.limitStrength,
+          uciElo: Number.isInteger(options.uciElo) ? options.uciElo : this.lastOptions.uciElo,
           skillLevel: Number.isInteger(options.skillLevel) ? options.skillLevel : this.lastOptions.skillLevel,
           multipv: Number.isInteger(options.multipv) ? options.multipv : this.lastOptions.multipv,
           threads: Number.isInteger(options.threads) ? options.threads : this.lastOptions.threads,
@@ -413,6 +421,8 @@
 
       await this.init();
       await this.configure({
+        limitStrength: typeof options.limitStrength === "boolean" ? options.limitStrength : false,
+        uciElo: options.uciElo,
         skillLevel: options.skillLevel,
         multipv: options.multipv || 1,
         threads: options.threads,

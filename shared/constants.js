@@ -32,7 +32,9 @@
       label: { ko: "AI-1 / 600", en: "AI-1 / 600" },
       desc: { ko: "입문", en: "Entry" },
       engine: {
+        mode: "weak_multipv",
         movetime: 35,
+        limitStrength: false,
         skillLevel: 0,
         multipv: 4,
         choiceWeights: [0.4, 0.3, 0.2, 0.1],
@@ -45,10 +47,12 @@
       label: { ko: "AI-2 / 900", en: "AI-2 / 900" },
       desc: { ko: "쉬움", en: "Easy" },
       engine: {
-        movetime: 60,
+        mode: "weak_multipv",
+        movetime: 55,
+        limitStrength: false,
         skillLevel: 1,
-        multipv: 3,
-        choiceWeights: [0.55, 0.3, 0.15],
+        multipv: 4,
+        choiceWeights: [0.5, 0.25, 0.15, 0.1],
         avoidMateInOne: true,
         maxImmediateNetLoss: 500
       }
@@ -58,12 +62,14 @@
       label: { ko: "AI-3 / 1200", en: "AI-3 / 1200" },
       desc: { ko: "학습", en: "Learning" },
       engine: {
-        movetime: 100,
-        skillLevel: 3,
+        mode: "weak_multipv",
+        movetime: 80,
+        limitStrength: false,
+        skillLevel: 2,
         multipv: 3,
-        choiceWeights: [0.7, 0.2, 0.1],
+        choiceWeights: [0.6, 0.25, 0.15],
         avoidMateInOne: true,
-        maxImmediateNetLoss: 180
+        maxImmediateNetLoss: 240
       }
     },
     4: {
@@ -71,12 +77,14 @@
       label: { ko: "AI-4 / 1400", en: "AI-4 / 1400" },
       desc: { ko: "클럽", en: "Club" },
       engine: {
-        movetime: 180,
-        skillLevel: 5,
+        mode: "weak_multipv",
+        movetime: 130,
+        limitStrength: false,
+        skillLevel: 4,
         multipv: 2,
-        choiceWeights: [0.85, 0.15],
+        choiceWeights: [0.75, 0.25],
         avoidMateInOne: true,
-        maxImmediateNetLoss: 120
+        maxImmediateNetLoss: 150
       }
     },
     5: {
@@ -84,12 +92,15 @@
       label: { ko: "AI-5 / 1600", en: "AI-5 / 1600" },
       desc: { ko: "안정", en: "Solid" },
       engine: {
+        mode: "elo_limit",
         movetime: 320,
-        skillLevel: 8,
+        limitStrength: true,
+        uciElo: 1600,
         multipv: 2,
-        choiceWeights: [0.94, 0.06],
+        choiceWeights: [0.8, 0.2],
+        maxCpGapFromBest: 80,
         avoidMateInOne: true,
-        maxImmediateNetLoss: 100
+        maxImmediateNetLoss: 120
       }
     },
     6: {
@@ -97,10 +108,13 @@
       label: { ko: "AI-6 / 1800", en: "AI-6 / 1800" },
       desc: { ko: "강함", en: "Strong" },
       engine: {
+        mode: "elo_limit",
         movetime: 550,
-        skillLevel: 12,
-        multipv: 1,
-        choiceWeights: [1],
+        limitStrength: true,
+        uciElo: 1800,
+        multipv: 2,
+        choiceWeights: [0.9, 0.1],
+        maxCpGapFromBest: 45,
         avoidMateInOne: true,
         maxImmediateNetLoss: 100
       }
@@ -110,8 +124,10 @@
       label: { ko: "AI-7 / 2000 챌린지", en: "AI-7 / 2000 Challenge" },
       desc: { ko: "챌린지", en: "Challenge" },
       engine: {
-        movetime: 1000,
-        skillLevel: 18,
+        mode: "elo_limit",
+        movetime: 900,
+        limitStrength: true,
+        uciElo: 2000,
         multipv: 1,
         choiceWeights: [1],
         avoidMateInOne: true,
@@ -122,12 +138,14 @@
 
   const COACH_PROFILE = {
     movetime: 1400,
+    limitStrength: false,
     skillLevel: 20,
     multipv: 3
   };
 
   const REVIEW_PROFILE = {
     movetime: 180,
+    limitStrength: false,
     skillLevel: 18,
     multipv: 2,
     maxMoments: 5
