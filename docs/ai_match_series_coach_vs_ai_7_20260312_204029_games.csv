@@ -1,0 +1,6 @@
+game_id,round,white,black,result,reason,plies,move_count,duration_ms,white_avg_depth,black_avg_depth,white_avg_move_ms,black_avg_move_ms
+series_game_001,1,Coach,AI-7,1/2-1/2,threefold-repetition,90,45,104382,19.3778,16.4889,1409.2222,909.6444
+series_game_002,2,AI-7,Coach,1/2-1/2,threefold-repetition,100,50,115663,15.9200,20.9000,904.3600,1407.9400
+series_game_003,3,Coach,AI-7,1/2-1/2,threefold-repetition,121,61,140226,23.9344,19.0000,1406.4098,906.8000
+series_game_004,4,AI-7,Coach,1/2-1/2,threefold-repetition,64,32,74073,16.0625,18.6250,907.9375,1406.2188
+series_game_005,5,Coach,AI-7,1-0,checkmate,95,48,103647,36.4167,27.7660,1322.9167,853.6170

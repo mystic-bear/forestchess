@@ -1,0 +1,6 @@
+game_id,round,white,black,result,reason,plies,move_count,duration_ms,white_avg_depth,black_avg_depth,white_avg_move_ms,black_avg_move_ms
+series_game_001,1,Coach,AI-6,1/2-1/2,max-plies-limit,140,70,134050,26.8571,22.3286,1372.9143,541.1286
+series_game_002,2,AI-6,Coach,1/2-1/2,threefold-repetition,64,32,63075,13.5313,16.8125,563.4375,1407.0313
+series_game_003,3,Coach,AI-6,1-0,checkmate,117,59,109323,31.4576,29.5690,1336.0508,525.3448
+series_game_004,4,AI-6,Coach,1/2-1/2,max-plies-limit,140,70,137291,19.3000,26.7857,554.5286,1406.2286
+series_game_005,5,Coach,AI-6,1-0,checkmate,123,62,113813,34.7419,23.9508,1341.3065,502.0164

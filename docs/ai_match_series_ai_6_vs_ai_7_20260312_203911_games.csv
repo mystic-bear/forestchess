@@ -1,0 +1,11 @@
+game_id,round,white,black,result,reason,plies,move_count,duration_ms,white_avg_depth,black_avg_depth,white_avg_move_ms,black_avg_move_ms
+series_game_001,1,AI-6,AI-7,1/2-1/2,max-plies-limit,140,70,102791,19.9286,18.6429,561.1571,906.3857
+series_game_002,2,AI-7,AI-6,1/2-1/2,threefold-repetition,123,62,90101,16.2742,15.6557,909.6452,551.6721
+series_game_003,3,AI-6,AI-7,1-0,checkmate,137,69,96695,25.5507,26.1912,543.9855,869.1912
+series_game_004,4,AI-7,AI-6,1/2-1/2,threefold-repetition,54,27,39643,15.0000,14.8519,904.3333,563.2593
+series_game_005,5,AI-6,AI-7,0-1,checkmate,134,67,94226,31.2090,33.7612,535.5224,870.4179
+series_game_006,6,AI-7,AI-6,1-0,checkmate,105,53,73191,28.0566,28.1923,858.4717,531.8846
+series_game_007,7,AI-6,AI-7,1/2-1/2,max-plies-limit,140,70,101694,18.4000,19.8714,556.1714,896.0429
+series_game_008,8,AI-7,AI-6,1/2-1/2,max-plies-limit,140,70,101932,24.5000,20.8571,908.2571,547.4143
+series_game_009,9,AI-6,AI-7,1/2-1/2,threefold-repetition,60,30,43930,14.9000,15.5667,557.1000,906.6000
+series_game_010,10,AI-7,AI-6,1/2-1/2,threefold-repetition,135,68,97221,23.2206,20.4627,881.5882,555.7910

@@ -1,0 +1,89 @@
+[Event "Forest Chess Match Series"]
+[Site "Headless"]
+[Date "2026.03.12"]
+[White "AI-6"]
+[Black "AI-7"]
+[Result "1/2-1/2"]
+
+1. e4 e6 2. d4 d5 3. e5 c5 4. c3 Qb6 5. Nf3 Bd7 6. a3 Bb5 7. b4 cxd4 8. Bxb5+ Qxb5 9. cxd4 Qc4 10. Bd2 Ne7 11. Nc3 Nd7 12. Ne2 Nb6 13. a4 Qc7 14. h4 h5 15. b5 Rc8 16. Rc1 Nc4 17. Ng3 Ng6 18. Ne2 Ba3 19. Rc2 Be7 20. Ra2 Nxd2 21. Qxd2 O-O 22. g3 Qc4 23. O-O Qb3 24. Kg2 Bb4 25. Qb2 Qxb2 26. Rxb2 Rc4 27. Rc1 Rfc8 28. Rxb4 Rxc1 29. Nxc1 Rxc1 30. Rb2 Rc4 31. a5 Ne7 32. Kf1 Nf5 33. a6 b6 34. Ke2 Rc3 35. Rd2 Kf8 36. Rb2 Ke7 37. Rb4 Rc2+ 38. Kf1 Kd7 39. Ng5 Nh6 40. Ke1 f6 41. exf6 gxf6 42. Nh3 e5 43. dxe5 fxe5 44. Rb3 Ke7 45. Kd1 Rc5 46. f3 Nf5 47. g4 hxg4 48. fxg4 Nxh4 49. Ng5 Rc4 50. Rg3 Kf6 51. Nh7+ Kg7 52. Ng5 e4 53. Ne6+ Kf6 54. Nd8 Nf3 55. Rh3 d4 56. Rh5 d3 57. Rf5+ Kg6 58. Nf7 Ra4 59. Ne5+ Nxe5 60. Rxe5 Kf6 61. Rf5+ Ke6 62. Rf8 Ke5 63. Kc1 e3 64. Kb2 e2 65. Re8+ Kd4 66. Kc1 Ra1+ 67. Kb2 e1=Q 68. Rxe1 Rxe1 69. g5 d2 70. g6 d1=Q 1/2-1/2
+
+[Event "Forest Chess Match Series"]
+[Site "Headless"]
+[Date "2026.03.12"]
+[White "AI-7"]
+[Black "AI-6"]
+[Result "1/2-1/2"]
+
+1. e4 e6 2. d4 d5 3. e5 c5 4. c3 Nc6 5. Nf3 cxd4 6. cxd4 Nge7 7. Nc3 Nf5 8. a3 Bd7 9. h4 Be7 10. g3 Qb6 11. Na4 Qd8 12. Bh3 f6 13. exf6 Bxf6 14. Bxf5 exf5 15. O-O h6 16. Bf4 O-O 17. Nc5 Bc8 18. Re1 g5 19. hxg5 hxg5 20. Nxg5 Bxg5 21. Qh5 Bf6 22. Rad1 Ne7 23. Bg5 Bxg5 24. Qxg5+ Kf7 25. Re5 Ng6 26. Rxf5+ Kg7 27. Rxd5 Qe7 28. Qxe7+ Nxe7 29. Rg5+ Kf7 30. d5 b6 31. d6 Rd8 32. Ne4 Bb7 33. Re5 Ng6 34. Rf5+ Ke6 35. Rf6+ Ke5 36. Rxg6 Bxe4 37. f4+ Kf5 38. Rg5+ Kf6 39. g4 Rac8 40. Kf2 Rc6 41. Rd4 Bb1 42. Rgd5 Ba2 43. Rf5+ Kg6 44. Rg5+ Kf7 45. Rf5+ Ke6 46. Rh5 Rdxd6 47. Rh6+ Ke7 48. Rh7+ Bf7 49. Rxd6 Rxd6 50. Ke3 Rd7 51. Rh6 Rd6 52. Rh7 Rd7 53. Ke4 Kf8 54. Rh3 Re7+ 55. Kf5 Be8 56. Rg3 Bb5 57. Kg6 Rg7+ 58. Kf6 Rf7+ 59. Kg5 Rg7+ 60. Kf6 Rf7+ 61. Kg5 Rg7+ 62. Kf6 1/2-1/2
+
+[Event "Forest Chess Match Series"]
+[Site "Headless"]
+[Date "2026.03.12"]
+[White "AI-6"]
+[Black "AI-7"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 Nc6 3. d4 exd4 4. Nxd4 Bc5 5. Nb3 Bb6 6. Nc3 Nf6 7. Qe2 O-O 8. Be3 d5 9. O-O-O d4 10. f3 Be6 11. Bg5 Nb4 12. e5 Re8 13. Qe1 Bf5 14. Ne4 a5 15. a3 Rxe5 16. axb4 Bxe4 17. Bxf6 Qxf6 18. fxe4 a4 19. Nxd4 Ree8 20. c3 Bxd4 21. Rxd4 a3 22. bxa3 Rxa3 23. Kb2 Rea8 24. Bc4 b5 25. Bd5 c6 26. Bb3 c5 27. bxc5 h6 28. Rd6 Qe7 29. Qd2 Kh7 30. Qd5 Rxb3+ 31. Qxb3 Qxe4 32. Rd4 Qc6 33. Qc2+ g6 34. Ra1 Rxa1 35. Kxa1 Qxc5 36. Kb2 b4 37. Rxb4 Qe3 38. h3 Kg8 39. Rb8+ Kh7 40. Rb7 Kg8 41. Qd1 Qe8 42. Qd7 Qe2+ 43. Kb3 Qf1 44. Qe8+ Kg7 45. Qe5+ Qf6 46. Qxf6+ Kxf6 47. Kc4 Ke5 48. Rxf7 h5 49. g4 Ke6 50. Rf2 Ke5 51. gxh5 gxh5 52. Rf8 h4 53. Rf7 Ke4 54. Rf6 Ke5 55. Rf8 Ke4 56. Rf7 Ke3 57. Rf6 Ke2 58. Rf4 Ke3 59. Rxh4 Kf2 60. Rd4 Kf1 61. h4 Ke1 62. h5 Kf2 63. h6 Kf3 64. h7 Ke2 65. h8=Q Kf3 66. Qh3+ Ke2 67. Qg2+ Ke1 68. Rf4 Kd1 69. Rf1# 1-0
+
+[Event "Forest Chess Match Series"]
+[Site "Headless"]
+[Date "2026.03.12"]
+[White "AI-7"]
+[Black "AI-6"]
+[Result "1/2-1/2"]
+
+1. e4 e6 2. d4 d5 3. e5 Bd7 4. Nf3 c5 5. c3 Qb6 6. a3 Bb5 7. Bxb5+ Qxb5 8. b4 cxd4 9. cxd4 Nc6 10. Nc3 Qc4 11. Bd2 Nge7 12. Rc1 Nc8 13. Ne2 Qb5 14. a4 Qb6 15. b5 Na5 16. O-O Nc4 17. Nf4 Be7 18. Nh5 Nxd2 19. Qxd2 O-O 20. Rc3 Qd8 21. a5 Bb4 22. Rxc8 Qxc8 23. Qg5 g6 24. Nf6+ Kg7 25. Nh5+ Kg8 26. Nf6+ Kg7 27. Nh5+ Kg8 1/2-1/2
+
+[Event "Forest Chess Match Series"]
+[Site "Headless"]
+[Date "2026.03.12"]
+[White "AI-6"]
+[Black "AI-7"]
+[Result "0-1"]
+
+1. e4 e5 2. Nf3 Nc6 3. d4 exd4 4. Nxd4 Bc5 5. Nb3 Bb6 6. Nc3 d6 7. Bf4 Nf6 8. Qd2 h6 9. Bb5 Nh5 10. Be3 Bxe3 11. Qxe3 Qg5 12. e5 Qxe3+ 13. fxe3 dxe5 14. Nd5 Rb8 15. Rf1 Nf6 16. O-O-O Bg4 17. Bxc6+ bxc6 18. Nxf6+ gxf6 19. Rd2 Ke7 20. Nc5 Rhg8 21. b3 Be6 22. Rdf2 f5 23. g3 Rbf8 24. e4 fxe4 25. Nxe4 f5 26. Nc3 h5 27. Re2 e4 28. Ref2 c5 29. Rf4 Rh8 30. Kd2 h4 31. Nd1 hxg3 32. hxg3 Kd6 33. g4 Ke5 34. gxf5 Rxf5 35. R4f2 Rd8+ 36. Ke2 Rxf2+ 37. Nxf2 Rg8 38. Rh1 Rg2 39. Kf1 Rg3 40. Rh7 Bf5 41. Rxc7 Rc3 42. Ke1 Rxc2 43. Rxa7 e3 44. Nd1 Rc1 45. Re7+ Kd4 46. Rf7 Bg6 47. Rf4+ Ke5 48. Rh4 Bd3 49. Rh8 Bb5 50. Rh5+ Ke4 51. Rh6 e2 52. Re6+ Kd4 53. Rxe2 Bxe2 54. Kd2 Rxd1+ 55. Kxe2 Rb1 56. Kf3 Rb2 57. Kg3 Rxa2 58. Kf4 Ra3 59. Kf5 Rxb3 60. Kg6 c4 61. Kf5 c3 62. Ke6 c2 63. Kd6 c1=Q 64. Ke7 Rb7+ 65. Kf6 Rb6+ 66. Kg7 Qc7+ 67. Kh8 Rb8# 0-1
+
+[Event "Forest Chess Match Series"]
+[Site "Headless"]
+[Date "2026.03.12"]
+[White "AI-7"]
+[Black "AI-6"]
+[Result "1-0"]
+
+1. e4 e6 2. d4 a6 3. Bd3 b5 4. Be3 Bb7 5. Nd2 Nf6 6. a4 bxa4 7. Nh3 Be7 8. c4 Bb4 9. e5 Ne4 10. O-O Nxd2 11. Bxd2 Bxd2 12. Qxd2 d5 13. Rxa4 c5 14. Qf4 Bc6 15. Bc2 cxd4 16. Ng5 Ra7 17. cxd5 Qxd5 18. Be4 Qb3 19. Rxd4 h6 20. Rd3 hxg5 21. Rxb3 gxf4 22. Rxb8+ Ke7 23. Rxh8 Bxe4 24. f3 Bc6 25. Rb8 Rd7 26. Rc1 Ba4 27. Rb4 Bb5 28. Rxf4 g6 29. h4 Kf8 30. b4 Rd5 31. Rc8+ Be8 32. Rc5 Rd3 33. Rc8 Ke7 34. Rc7+ Kf8 35. Ra7 Rd5 36. Re4 Ba4 37. Rxa6 Bc2 38. Rc4 Bf5 39. Ra7 Kg7 40. g4 g5 41. gxf5 exf5 42. e6 Rd1+ 43. Kf2 Ra1 44. Rcc7 Rb1 45. exf7 Rb2+ 46. Kg3 gxh4+ 47. Kh3 Re2 48. Rc8 Kf6 49. f8=Q+ Ke5 50. Qh6 Rh2+ 51. Kxh2 Kd5 52. Rd7+ Ke5 53. Rc5# 1-0
+
+[Event "Forest Chess Match Series"]
+[Site "Headless"]
+[Date "2026.03.12"]
+[White "AI-6"]
+[Black "AI-7"]
+[Result "1/2-1/2"]
+
+1. e4 e5 2. Nf3 Nf6 3. Nxe5 d6 4. Nf3 Nxe4 5. d4 d5 6. Bd3 Bb4+ 7. Nbd2 O-O 8. c3 Nxd2 9. Bxd2 Bd6 10. Ne5 Nc6 11. O-O Nxe5 12. dxe5 Bxe5 13. Bxh7+ Kxh7 14. Qh5+ Kg8 15. Qxe5 Re8 16. Qg3 Bf5 17. Rfe1 Qd7 18. h4 f6 19. h5 Qf7 20. Qf3 Qd7 21. Qg3 c5 22. a4 a5 23. f3 d4 24. Qf4 Rad8 25. Rac1 b6 26. Kf2 d3 27. Rxe8+ Rxe8 28. Be3 Re5 29. g4 Bh7 30. h6 Bg6 31. hxg7 Kxg7 32. Ra1 Qd5 33. c4 Qe6 34. Rb1 Qe8 35. Rh1 Re6 36. Re1 Qe7 37. Rh1 Re5 38. b3 Kg8 39. Re1 Kf7 40. Rb1 Re6 41. Ra1 Qd7 42. Rd1 Qe8 43. Rh1 Re7 44. Qh6 Qb8 45. Qh2 Qxh2+ 46. Rxh2 d2 47. Bxd2 Bc2 48. Kg3 Bxb3 49. g5 fxg5 50. Bxg5 Re6 51. Bd8 Bxa4 52. f4 Rg6+ 53. Kf3 Bb3 54. f5 Rc6 55. Rh7+ Ke8 56. Bc7 Bxc4 57. Be5 a4 58. Ra7 Rh6 59. Rxa4 Bd5+ 60. Kg3 Kd7 61. Ra7+ Kc6 62. f6 Be6 63. f7 Bxf7 64. Rxf7 c4 65. Rf5 Re6 66. Kf4 Kb5 67. Ke3 Kb4 68. Kd4 Rc6 69. Kd5 Rc8 70. Rf6 b5 1/2-1/2
+
+[Event "Forest Chess Match Series"]
+[Site "Headless"]
+[Date "2026.03.12"]
+[White "AI-7"]
+[Black "AI-6"]
+[Result "1/2-1/2"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Bc5 5. c3 Nf6 6. d4 Ba7 7. O-O O-O 8. Re1 d6 9. h3 b5 10. Bc2 Re8 11. a4 Bb7 12. d5 Ne7 13. Nh4 h6 14. Qf3 Nh7 15. Qg3 Kh8 16. Nd2 Rg8 17. Nf1 g5 18. Nf3 f5 19. exf5 Nxd5 20. Be3 Nhf6 21. Bxa7 Rxa7 22. Bb3 Ra8 23. N3d2 bxa4 24. Rxa4 Qd7 25. Ra5 Qxf5 26. Ne3 Qd3 27. Nxd5 Qxd2 28. Rd1 Qxb2 29. Nxf6 Qxb3 30. Qd3 Rg7 31. Rb1 Qf7 32. Rxb7 Qxf6 33. f3 Qf4 34. Rxa6 Qc1+ 35. Kh2 Qf4+ 36. g3 Qf8 37. Rxa8 Qxa8 38. Qb1 Rg8 39. Rxc7 Rg7 40. Rxg7 Kxg7 41. Qd3 Qa3 42. Qd2 Qa6 43. Kg1 Qc6 44. Qd3 Qb6+ 45. Kf1 Qb2 46. Qxd6 Qc1+ 47. Ke2 Qxc3 48. Qe7+ Kg6 49. Qe6+ Kh7 50. Qf7+ Kh8 51. Qf6+ Kh7 52. Qd6 Qc4+ 53. Ke3 Qb3+ 54. Ke4 Qc2+ 55. Ke3 Qc3+ 56. Ke4 Qc2+ 57. Kxe5 Qe2+ 58. Kf5 Qxf3+ 59. Ke6 Kg6 60. g4 Qe4+ 61. Qe5 Qf4 62. Qf5+ Kg7 63. Qe5+ Kg6 64. Qf5+ Kg7 65. Qe5+ Qxe5+ 66. Kxe5 Kg6 67. Ke6 Kg7 68. Ke7 Kg6 69. Ke6 h5 70. Ke5 Kg7 1/2-1/2
+
+[Event "Forest Chess Match Series"]
+[Site "Headless"]
+[Date "2026.03.12"]
+[White "AI-6"]
+[Black "AI-7"]
+[Result "1/2-1/2"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. d4 exd4 6. O-O Be7 7. Nxd4 b5 8. Bb3 Nxd4 9. e5 Nxb3 10. exf6 Bxf6 11. Re1+ Be7 12. axb3 O-O 13. Nc3 c6 14. Bd2 d5 15. Ne2 Bg4 16. h3 Bh5 17. Ba5 Qd6 18. Qd2 Bf6 19. Nf4 Bg5 20. g3 Rfe8 21. Bb6 Bg6 22. b4 Be4 23. h4 Bh6 24. c3 Qd7 25. Bc5 Re6 26. Be3 Re5 27. Bd4 Rf5 28. Be3 Re5 29. Bd4 Rf5 30. Be3 Re5 1/2-1/2
+
+[Event "Forest Chess Match Series"]
+[Site "Headless"]
+[Date "2026.03.12"]
+[White "AI-7"]
+[Black "AI-6"]
+[Result "1/2-1/2"]
+
+1. e4 e6 2. Nc3 Nf6 3. e5 Nd5 4. Nf3 d6 5. Nxd5 exd5 6. d4 Nd7 7. Bd3 dxe5 8. Nxe5 g6 9. Nxd7 Bxd7 10. O-O Be6 11. Re1 Bg7 12. c3 O-O 13. Bf4 c6 14. h3 Qb6 15. Qd2 c5 16. dxc5 Qxc5 17. Be5 Rad8 18. Rad1 Qb6 19. a3 d4 20. Bxg7 Kxg7 21. c4 Bd7 22. b4 Rfe8 23. Rxe8 Rxe8 24. Bc2 Qf6 25. Kf1 Rc8 26. Qxd4 Be6 27. c5 b6 28. Qe3 bxc5 29. bxc5 Qe7 30. Qc3+ Qf6 31. Qe3 Re8 32. Kg1 Bd7 33. Be4 Bc6 34. f3 Qe5 35. Qd4 Bxe4 36. fxe4 Re6 37. Kf2 Rf6+ 38. Kg1 Re6 39. g3 Kg8 40. Kf2 Qxe4 41. Qxe4 Rxe4 42. Rc1 Re8 43. g4 f6 44. c6 Kf7 45. c7 Rc8 46. Rc6 f5 47. gxf5 gxf5 48. Ke3 Ke8 49. Rc4 Kd7 50. Rd4+ Kxc7 51. Rc4+ Kb7 52. Rxc8 Kxc8 53. Kf4 a6 54. h4 Kc7 55. Kg5 Kd6 56. Kxf5 a5 57. Kf6 a4 58. Kg7 h5 59. Kf6 Kd7 60. Kg7 Ke8 61. Kf6 Kd7 62. Kg5 Ke6 63. Kxh5 Kf5 64. Kh6 Kf6 65. Kh7 Kf5 66. Kh6 Kf6 67. Kh5 Kf5 68. Kh6 1/2-1/2
