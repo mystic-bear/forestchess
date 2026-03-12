@@ -212,3 +212,29 @@
 
 - `index.html` now points to versioned asset URLs, reducing the chance of stale CSS/JS after a push.
 - The mismatch is now narrowed to browser cache or the user opening a different local copy, not to `git push` itself.
+
+---
+
+## 2026-03-12 15:16:53 - Board Area Still Resized With Desktop Width
+
+### Symptom
+
+- Even after adding a board max width, the center area still felt visually unstable.
+- The board column could continue stretching because the middle grid track itself was still `1fr`.
+
+### Root Cause
+
+- The board shell had its own cap, but the parent center column still expanded with the page width.
+- That left a large flexible middle panel, so the overall board region still looked like it was resizing.
+
+### Fix
+
+- Added `--board-panel-width: 796px`.
+- Changed the desktop game grid to `minmax(220px, 280px) minmax(620px, var(--board-panel-width)) minmax(250px, 320px)`.
+- Centered the whole three-column layout with `justify-content: center`.
+- Set `.board-panel` to `width: min(100%, var(--board-panel-width))` and `justify-self: center`.
+
+### Result
+
+- The center board column is now fixed to a stable desktop width instead of consuming all leftover space.
+- The board area should now look consistent across machines until the responsive breakpoint stacks the layout.

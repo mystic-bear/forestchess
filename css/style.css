@@ -24,6 +24,7 @@
   --white-accent: #f2c17a;
   --black-accent: #7fa8f7;
   --board-max-size: 760px;
+  --board-panel-width: 796px;
 }
 
 @import url("https://fonts.googleapis.com/css2?family=Jua&display=swap");
@@ -384,9 +385,10 @@ button {
 
 .game-grid {
   display: grid;
-  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) minmax(250px, 320px);
+  grid-template-columns: minmax(220px, 280px) minmax(620px, var(--board-panel-width)) minmax(250px, 320px);
   gap: 18px;
   align-items: start;
+  justify-content: center;
 }
 
 .sidebar-panel {
@@ -496,6 +498,8 @@ button {
   padding: 18px;
   display: grid;
   align-content: start;
+  width: min(100%, var(--board-panel-width));
+  justify-self: center;
 }
 
 .board-panel-head {
@@ -504,7 +508,7 @@ button {
   gap: 18px;
   align-items: flex-start;
   margin-bottom: 16px;
-  width: min(100%, var(--board-max-size));
+  width: 100%;
   margin-inline: auto;
 }
 
@@ -519,7 +523,7 @@ button {
   background:
     radial-gradient(circle at top, rgba(255, 255, 255, 0.4), transparent 34%),
     linear-gradient(180deg, #d4a66f, var(--board-edge));
-  width: min(100%, var(--board-max-size));
+  width: 100%;
   margin-inline: auto;
 }
 
