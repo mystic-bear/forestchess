@@ -6,7 +6,10 @@
       ...require("../shared/constants.js"),
       ...require("../shared/utils.js"),
       ChessState: require("./chess/chess-state.js"),
-      ChessRules: require("./chess/rules.js")
+      ChessRules: require("./chess/rules.js"),
+      ChessPgn: require("./chess/pgn.js"),
+      ChessReview: require("./chess/review.js"),
+      ...require("./persistence/save-manager.js")
     };
   } else {
     deps = root;
@@ -28,27 +31,30 @@
     QUICK_PRESETS,
     PLAYER_ORDER,
     SETUP_STATES,
-    PLAYER_INFO,
     PIECE_LABEL_MODES,
     BOARD_ORIENTATION_OPTIONS,
     deepCopy,
     isAiState,
     getAiLevelFromState,
-    resolveLocalizedText,
     getPlayerColorKey,
     getPlayerLabel,
     cycleOptionKey,
-    formatStatusReason
+    formatStatusReason,
+    buildSetupSummary
   } = deps;
 
   const ChessState = deps.ChessState;
   const ChessRules = deps.ChessRules;
+  const ChessPgn = deps.ChessPgn;
+  const ChessReview = deps.ChessReview;
+  const SaveManager = deps.SaveManager;
   const LANGUAGE_STORAGE_KEY = "forest-chess-language";
 
   class Game {
     constructor(options = {}) {
       this.aiBridge = options.aiBridge || null;
       this.ui = options.ui || null;
+      this.saveManager = options.saveManager || (typeof SaveManager === "function" ? new SaveManager() : null);
       this.language = this.loadLanguageSetting();
       this.setupPlayers = deepCopy(DEFAULT_SETUP);
       this.whitePlayerType = DEFAULT_SETUP.white;
@@ -67,7 +73,9 @@
         state: this.aiSystemEnabled ? "idle" : "unavailable",
         message: this.getEngineMessage(this.aiBridge?.lastError)
       };
+      this.resumeSnapshot = null;
       this.resetSession();
+      this.refreshResumeSnapshot();
     }
 
     loadLanguageSetting() {
@@ -87,7 +95,7 @@
           localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
         }
       } catch (error) {
-        // Ignore storage failures and keep the in-memory setting.
+        // Ignore storage failures.
       }
     }
 
@@ -111,6 +119,7 @@
       if (nextLanguage === this.language) return;
       this.language = nextLanguage;
       this.saveLanguageSetting(nextLanguage);
+      this.persistLatestGame();
       this.refreshUi();
     }
 
@@ -129,6 +138,7 @@
           message: this.getEngineMessage(aiBridge?.lastError) || this.t("engine.unavailable")
         };
       }
+      this.persistLatestGame();
     }
 
     notifyUi(method, ...args) {
@@ -161,6 +171,11 @@
       this.lastHintSession = null;
       this.aiThinking = false;
       this.inputLocked = false;
+      this.reviewState = {
+        open: false,
+        frames: [],
+        index: 0
+      };
     }
 
     get currentState() {
@@ -169,6 +184,36 @@
 
     get moveHistory() {
       return this.chessGame?.history || [];
+    }
+
+    refreshResumeSnapshot() {
+      this.resumeSnapshot = this.saveManager ? this.saveManager.loadLatest() : null;
+      return this.resumeSnapshot;
+    }
+
+    hasResumeCandidate() {
+      return !!this.resumeSnapshot;
+    }
+
+    getResumeInfo() {
+      const snapshot = this.resumeSnapshot;
+      if (!snapshot) return null;
+      const locale = this.language === "ko" ? "ko-KR" : "en-US";
+      const savedAtLabel = snapshot.savedAt
+        ? new Date(snapshot.savedAt).toLocaleString(locale)
+        : "-";
+      const setupPlayers = snapshot.setupPlayers || {
+        white: snapshot.whitePlayerType || "HUMAN",
+        black: snapshot.blackPlayerType || "HUMAN"
+      };
+      return {
+        savedAtLabel,
+        setupSummary: buildSetupSummary(setupPlayers, this.language),
+        lastMoveSan: snapshot.lastMove?.san || (snapshot.moveHistorySan?.length ? snapshot.moveHistorySan[snapshot.moveHistorySan.length - 1] : "-"),
+        resultLine: snapshot.resultState?.terminal
+          ? (formatStatusReason(snapshot.resultState, this.language) || this.t("result.gameOver"))
+          : this.t("resume.inProgress")
+      };
     }
 
     invalidateAsyncState() {
@@ -213,6 +258,41 @@
       return this.canUseAi() ? type : "HUMAN";
     }
 
+    buildSaveSnapshot() {
+      if (!this.chessGame || !this.currentState) return null;
+      return {
+        initialFen: this.chessGame.initialFen,
+        currentFen: ChessState.serializeFen(this.currentState),
+        moveHistoryUci: this.moveHistory.map((entry) => entry.uci),
+        moveHistorySan: this.moveHistory.map((entry) => entry.san),
+        resultState: this.resultState ? { ...this.resultState } : null,
+        whitePlayerType: this.whitePlayerType,
+        blackPlayerType: this.blackPlayerType,
+        pieceLabelMode: this.pieceLabelMode,
+        boardOrientation: this.boardOrientation,
+        language: this.language,
+        engineStatus: this.engineStatus ? { ...this.engineStatus } : null,
+        lastMove: this.lastMove ? { ...this.lastMove } : null,
+        setupPlayers: { ...this.setupPlayers },
+        modeKey: this.modeKey
+      };
+    }
+
+    persistLatestGame() {
+      if (!this.saveManager) return null;
+      const snapshot = this.buildSaveSnapshot();
+      if (!snapshot) return null;
+      const saved = this.saveManager.saveLatest(snapshot);
+      this.resumeSnapshot = saved;
+      return saved;
+    }
+
+    clearSavedGame() {
+      if (!this.saveManager) return;
+      this.saveManager.clearLatest();
+      this.resumeSnapshot = null;
+    }
+
     applyPreset(presetKey) {
       const preset = QUICK_PRESETS.find((entry) => entry.key === presetKey);
       if (!preset) return;
@@ -235,18 +315,21 @@
     cyclePieceLabelMode() {
       this.pieceLabelMode = cycleOptionKey(PIECE_LABEL_MODES, this.pieceLabelMode);
       this.notifyUi("renderSetup");
+      this.persistLatestGame();
       this.refreshUi();
     }
 
     cycleBoardOrientationSetting() {
       this.boardOrientation = cycleOptionKey(BOARD_ORIENTATION_OPTIONS, this.boardOrientation);
       this.notifyUi("renderSetup");
+      this.persistLatestGame();
       this.refreshUi();
     }
 
     toggleBoardOrientation() {
       this.boardOrientation = this.boardOrientation === "white" ? "black" : "white";
       this.notifyUi("renderSetup");
+      this.persistLatestGame();
       this.refreshUi();
     }
 
@@ -260,6 +343,7 @@
       this.chessGame = ChessRules.createGame();
       this.invalidateAsyncState();
       this.refreshDerivedState();
+      this.persistLatestGame();
       this.notifyUi("showScreen", "game-screen");
       this.refreshUi();
 
@@ -270,6 +354,52 @@
       this.maybeRequestAiMove();
     }
 
+    resumeSavedGame() {
+      const snapshot = this.saveManager ? this.saveManager.loadLatest() : null;
+      if (!snapshot) {
+        this.toast(this.t("resume.none"));
+        return false;
+      }
+
+      this.cancelPendingAsync();
+      this.resetSession();
+      this.language = isSupportedLanguage(snapshot.language) ? snapshot.language : DEFAULT_LANGUAGE;
+      this.saveLanguageSetting(this.language);
+      this.setupPlayers = snapshot.setupPlayers ? { ...snapshot.setupPlayers } : {
+        white: snapshot.whitePlayerType || "HUMAN",
+        black: snapshot.blackPlayerType || "HUMAN"
+      };
+      this.whitePlayerType = snapshot.whitePlayerType || this.setupPlayers.white || "HUMAN";
+      this.blackPlayerType = snapshot.blackPlayerType || this.setupPlayers.black || "HUMAN";
+      this.pieceLabelMode = snapshot.pieceLabelMode || "both";
+      this.boardOrientation = snapshot.boardOrientation || "white";
+      this.modeKey = snapshot.modeKey || "resume";
+      this.engineStatus = snapshot.engineStatus
+        ? { ...snapshot.engineStatus }
+        : {
+            state: this.canUseAi() ? "idle" : "unavailable",
+            message: this.canUseAi() ? "" : this.t("engine.unavailable")
+          };
+
+      this.chessGame = snapshot.moveHistoryUci?.length
+        ? ChessRules.playMoves(snapshot.moveHistoryUci, { fen: snapshot.initialFen })
+        : ChessRules.createGame({ fen: snapshot.initialFen });
+
+      this.resultState = snapshot.resultState ? { ...snapshot.resultState } : null;
+      this.invalidateAsyncState();
+      this.refreshDerivedState();
+      this.resumeSnapshot = snapshot;
+      this.notifyUi("hideSetup");
+      this.notifyUi("showScreen", "game-screen");
+      this.refreshUi();
+
+      if (!this.isGameOver()) {
+        this.maybeRequestAiMove();
+      }
+
+      return true;
+    }
+
     restart() {
       this.startFromSetup();
     }
@@ -278,6 +408,7 @@
       this.cancelPendingAsync();
       this.resetSession();
       this.invalidateAsyncState();
+      this.refreshResumeSnapshot();
       this.notifyUi("hideSetup");
       this.notifyUi("showScreen", "start-screen");
       this.notifyUi("renderStart");
@@ -441,14 +572,16 @@
           this.refreshDerivedState();
         }
 
-        if (!this.currentStatus?.terminal && source !== "ai-failure") {
-          this.maybeRequestAiMove();
-        }
-
         this.engineStatus = {
           state: this.canUseAi() ? "idle" : "unavailable",
           message: this.canUseAi() ? "" : this.engineStatus.message
         };
+
+        this.persistLatestGame();
+
+        if (!this.currentStatus?.terminal && source !== "ai-failure") {
+          this.maybeRequestAiMove();
+        }
 
         this.refreshUi();
       } catch (error) {
@@ -501,6 +634,7 @@
       this.clearSelection(false);
       this.invalidateAsyncState();
       this.refreshDerivedState();
+      this.persistLatestGame();
       this.refreshUi();
     }
 
@@ -523,6 +657,7 @@
       this.cancelPendingAsync();
       this.invalidateAsyncState();
       this.refreshDerivedState();
+      this.persistLatestGame();
       this.refreshUi();
     }
 
@@ -556,6 +691,7 @@
           state: "unavailable",
           message: this.engineStatus.message || this.t("engine.continueLocal")
         };
+        this.persistLatestGame();
         this.toast(this.t("toast.engineUnavailableLocal"));
         this.refreshUi();
         return;
@@ -739,6 +875,8 @@
         };
       }
 
+      this.persistLatestGame();
+
       if (options.fromHint) {
         this.toast(fatal
           ? `${this.t("engine.hintUnavailable")} ${this.t("engine.continueLocal")}`
@@ -860,6 +998,75 @@
         title: formatStatusReason(this.resultState, this.language) || this.t("result.gameOver"),
         text: this.t("result.draw")
       };
+    }
+
+    buildReviewSummary() {
+      return this.currentState ? ChessReview.buildReviewSummary(this, this.language) : [];
+    }
+
+    getReviewSummary() {
+      return this.buildReviewSummary();
+    }
+
+    canOpenReview() {
+      return !!this.currentState && this.moveHistory.length > 0;
+    }
+
+    openReview() {
+      if (!this.canOpenReview()) return;
+      this.reviewState.frames = ChessReview.buildReplayFrames(this);
+      this.reviewState.index = Math.max(0, this.reviewState.frames.length - 1);
+      this.reviewState.open = true;
+      this.refreshUi();
+    }
+
+    closeReview() {
+      if (!this.reviewState.open) return;
+      this.reviewState.open = false;
+      this.refreshUi();
+    }
+
+    setReviewIndex(index) {
+      if (!this.reviewState.frames.length) return;
+      const clamped = Math.max(0, Math.min(index, this.reviewState.frames.length - 1));
+      this.reviewState.index = clamped;
+      this.refreshUi();
+    }
+
+    stepReview(delta) {
+      this.setReviewIndex(this.reviewState.index + delta);
+    }
+
+    getActiveReviewFrame() {
+      if (!this.reviewState.frames.length) return null;
+      return this.reviewState.frames[this.reviewState.index] || null;
+    }
+
+    getCurrentFen() {
+      return this.currentState ? ChessState.serializeFen(this.currentState) : "";
+    }
+
+    buildPgnText(metadata = {}) {
+      return ChessPgn.buildPgn(this, {
+        language: this.language,
+        savedAt: this.resumeSnapshot?.savedAt || new Date().toISOString(),
+        ...metadata
+      });
+    }
+
+    exportPgn() {
+      const pgnText = this.buildPgnText();
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      this.notifyUi("downloadText", `forest-chess_${timestamp}.pgn`, pgnText);
+      this.toast(this.t("export.pgnDone"));
+      return pgnText;
+    }
+
+    copyFen() {
+      const fen = this.getCurrentFen();
+      if (!fen) return "";
+      this.notifyUi("copyText", fen, this.t("export.fenDone"));
+      return fen;
     }
 
     getHintButtonLabel() {

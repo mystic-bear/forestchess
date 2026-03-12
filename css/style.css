@@ -187,7 +187,8 @@ button {
 
 .preset-card,
 .setup-summary-card,
-.setup-row {
+.setup-row,
+.resume-card {
   border-radius: 20px;
   border: 1px solid var(--panel-line);
   background: rgba(255, 255, 255, 0.64);
@@ -247,6 +248,27 @@ button {
   padding: 18px;
   display: grid;
   gap: 14px;
+}
+
+.resume-card {
+  margin-bottom: 18px;
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.resume-meta {
+  display: grid;
+  gap: 8px;
+}
+
+.resume-title {
+  font-size: 1rem;
+}
+
+.resume-line {
+  color: var(--text-muted);
+  line-height: 1.35;
 }
 
 .setup-summary-title {
@@ -886,6 +908,40 @@ button {
 .overlay-card {
   width: min(540px, 100%);
   padding: 26px;
+}
+
+.review-summary {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.review-line {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.review-card {
+  width: min(760px, 100%);
+}
+
+.review-board-shell {
+  margin-top: 18px;
+  border-radius: 24px;
+  padding: 14px;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.4), transparent 34%),
+    linear-gradient(180deg, #d4a66f, var(--board-edge));
+}
+
+.review-move-nav {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .overlay-title {

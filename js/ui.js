@@ -48,6 +48,7 @@ const ui = {
   renderStart() {
     const presetList = document.getElementById("quick-start-list");
     const summary = document.getElementById("setup-summary");
+    const resumeCard = document.getElementById("resume-card");
     if (!presetList || !summary || !window.game) return;
 
     presetList.innerHTML = "";
@@ -72,6 +73,27 @@ const ui = {
       <div class="setup-summary-title">${this.t("start.currentSetup")}</div>
       <div class="setup-summary-body">${buildSetupSummary(game.setupPlayers, game.language)}</div>
     `;
+
+    if (resumeCard) {
+      const resumeInfo = game.getResumeInfo();
+      if (!resumeInfo) {
+        resumeCard.classList.add("hidden");
+        resumeCard.innerHTML = "";
+      } else {
+        resumeCard.classList.remove("hidden");
+        resumeCard.innerHTML = `
+          <div class="resume-meta">
+            <div class="resume-title">${this.t("resume.title")}</div>
+            <div class="resume-line">${this.t("resume.savedAt", { time: resumeInfo.savedAtLabel })}</div>
+            <div class="resume-line">${resumeInfo.setupSummary}</div>
+            <div class="resume-line">${this.t("resume.lastMove", { move: resumeInfo.lastMoveSan })}</div>
+            <div class="resume-line">${resumeInfo.resultLine}</div>
+          </div>
+          <button class="action-btn primary">${this.t("resume.button")}</button>
+        `;
+        resumeCard.querySelector("button").onclick = () => game.resumeSavedGame();
+      }
+    }
   },
 
   renderSetup() {
@@ -488,23 +510,121 @@ const ui = {
     const modal = document.getElementById("result-modal");
     const title = document.getElementById("result-title");
     const text = document.getElementById("result-text");
+    const reviewSummary = document.getElementById("review-summary");
+    const replayButton = document.getElementById("btn-open-review");
+    const exportButton = document.getElementById("btn-export-pgn");
+    const copyFenButton = document.getElementById("btn-copy-fen");
     if (!modal || !title || !text || !window.game) return;
 
     const summary = game.getResultSummary();
     if (!summary) {
       modal.classList.add("hidden");
+      if (reviewSummary) reviewSummary.innerHTML = "";
       return;
     }
 
     title.innerText = summary.title;
     text.innerText = summary.text;
+    if (reviewSummary) {
+      reviewSummary.innerHTML = game.getReviewSummary()
+        .map((line) => `<div class="review-line">${line}</div>`)
+        .join("");
+    }
+    if (replayButton) replayButton.innerText = this.t("review.open");
+    if (exportButton) exportButton.innerText = this.t("export.pgn");
+    if (copyFenButton) copyFenButton.innerText = this.t("export.copyFen");
     modal.classList.remove("hidden");
+  },
+
+  renderReviewOverlay() {
+    const overlay = document.getElementById("review-overlay");
+    const note = document.getElementById("review-board-note");
+    const boardShell = document.getElementById("review-board-grid");
+    if (!overlay || !note || !boardShell || !window.game) return;
+
+    if (!game.reviewState.open) {
+      overlay.classList.add("hidden");
+      boardShell.innerHTML = "";
+      return;
+    }
+
+    const frame = game.getActiveReviewFrame();
+    if (!frame) {
+      overlay.classList.add("hidden");
+      return;
+    }
+
+    const state = ChessState.parseFen(frame.fen);
+    const fileOrder = game.boardOrientation === "white"
+      ? [...ChessState.FILES]
+      : [...ChessState.FILES].reverse();
+    const rankOrder = game.boardOrientation === "white"
+      ? [8, 7, 6, 5, 4, 3, 2, 1]
+      : [1, 2, 3, 4, 5, 6, 7, 8];
+
+    note.innerText = frame.san
+      ? this.t("review.noteMove", { ply: frame.ply, move: frame.san })
+      : this.t("review.noteStart");
+
+    const board = document.createElement("div");
+    board.className = "board-grid";
+
+    rankOrder.forEach((rankNum, rowIndex) => {
+      fileOrder.forEach((fileChar, colIndex) => {
+        const square = `${fileChar}${rankNum}`;
+        const index = ChessState.squareToIndex(square);
+        const fileIndex = ChessState.FILES.indexOf(fileChar);
+        const isDark = (fileIndex + rankNum) % 2 === 1;
+        const piece = state.board[index];
+        const pieceColor = piece ? ChessState.pieceColor(piece) : null;
+        const isLastFrom = frame.lastMove?.from && ChessState.squareToIndex(frame.lastMove.from) === index;
+        const isLastTo = frame.lastMove?.to && ChessState.squareToIndex(frame.lastMove.to) === index;
+
+        const button = document.createElement("button");
+        button.className = [
+          "square",
+          isDark ? "dark" : "light",
+          isLastFrom ? "last-from" : "",
+          isLastTo ? "last-to" : ""
+        ].filter(Boolean).join(" ");
+        button.disabled = true;
+
+        if (colIndex === 0) {
+          const rankLabel = document.createElement("span");
+          rankLabel.className = "coord rank";
+          rankLabel.innerText = String(rankNum);
+          button.appendChild(rankLabel);
+        }
+
+        if (rowIndex === rankOrder.length - 1) {
+          const fileLabel = document.createElement("span");
+          fileLabel.className = "coord file";
+          fileLabel.innerText = fileChar;
+          button.appendChild(fileLabel);
+        }
+
+        if (piece) {
+          const pieceTitle = getPieceDisplayLabel(piece, "both", game.language);
+          button.title = pieceTitle;
+          button.appendChild(this.createPieceNode(piece, pieceColor));
+        }
+
+        board.appendChild(button);
+      });
+    });
+
+    boardShell.innerHTML = "";
+    boardShell.appendChild(board);
+    overlay.classList.remove("hidden");
   },
 
   updateButtons() {
     const undoButton = document.getElementById("btn-undo-move");
     const drawButton = document.getElementById("btn-claim-draw");
     const hintButton = document.getElementById("btn-hint");
+    const replayButton = document.getElementById("btn-open-review");
+    const exportButton = document.getElementById("btn-export-pgn");
+    const copyFenButton = document.getElementById("btn-copy-fen");
 
     if (undoButton) undoButton.disabled = !game.canUndo();
     if (drawButton) {
@@ -515,6 +635,9 @@ const ui = {
       hintButton.disabled = !game.currentState || game.isGameOver() || game.pendingPromotion || !game.canUseCoach();
       hintButton.innerText = game.getHintButtonLabel();
     }
+    if (replayButton) replayButton.disabled = !game.canOpenReview();
+    if (exportButton) exportButton.disabled = !game.currentState;
+    if (copyFenButton) copyFenButton.disabled = !game.currentState;
   },
 
   updateAll() {
@@ -531,7 +654,53 @@ const ui = {
     this.renderMoveList();
     this.renderPromotionModal();
     this.renderResultModal();
+    this.renderReviewOverlay();
     this.updateButtons();
+  },
+
+  copyText(text, successMessage) {
+    if (!text) return;
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(() => {
+          if (successMessage) this.toast(successMessage);
+        })
+        .catch(() => {
+          this.fallbackCopyText(text, successMessage);
+        });
+      return;
+    }
+    this.fallbackCopyText(text, successMessage);
+  },
+
+  fallbackCopyText(text, successMessage) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "true");
+    textarea.style.position = "absolute";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand("copy");
+      if (successMessage) this.toast(successMessage);
+    } catch (error) {
+      this.toast(text);
+    }
+    document.body.removeChild(textarea);
+  },
+
+  downloadText(filename, text) {
+    if (typeof document === "undefined") return;
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
   },
 
   toast(message) {
