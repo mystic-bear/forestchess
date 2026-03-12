@@ -137,3 +137,54 @@
 
 - `phase3-choosemove-smoke` now reports `../stockfish-18-lite-single.js` as the active engine path.
 - Browser-targeted startup is aligned to the smaller, weaker, but actually runnable engine first.
+
+---
+
+## 2026-03-12 15:05:05 - `file://` Launch Shows Worker Access Error
+
+### Symptom
+
+- The board opened, but the info panel showed a raw browser error like:
+- `Failed to construct 'Worker': Script at 'file:///...' cannot be accessed from origin 'null'.`
+
+### Root Cause
+
+- This is the browser security model for pages opened directly from disk.
+- When `index.html` is opened through `file://`, the page origin is `null`, and worker script loading is blocked in many browsers.
+- This is not the same failure mode as running from `http://localhost` or a deployed site.
+
+### Fix
+
+- Added a `file://` guard in `js/ai-bridge.js` before worker startup.
+- The bridge now marks AI and coach as unavailable with a direct message:
+- `AI and coach need http://localhost or a deployed site. Browsers block worker scripts on file:// pages.`
+
+### Result
+
+- Local file launches now fail in a predictable and readable way.
+- The issue is isolated to `file://` runs, not to normal local-server runs.
+
+---
+
+## 2026-03-12 15:05:05 - Board Width Shifted With Layout Space
+
+### Symptom
+
+- The chess board could visually grow or shrink too much depending on the surrounding panel width.
+- The center board area did not keep a stable desktop size.
+
+### Root Cause
+
+- The center grid column was flexible, and the board shell followed the full available width of that column.
+- There was no explicit maximum board size or centered board-width cap in the panel.
+
+### Fix
+
+- Added `--board-max-size: 760px`.
+- Centered the board header and board shell to `min(100%, var(--board-max-size))`.
+- Set the game grid to `align-items: start` and the board panel to grid layout so the board keeps a stable top-aligned block.
+
+### Result
+
+- The board keeps a stable desktop footprint instead of continuing to expand with empty horizontal space.
+- Smaller screens still shrink correctly because the cap is `min(100%, 760px)`.

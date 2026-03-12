@@ -23,6 +23,7 @@
   --shadow: 0 18px 40px rgba(53, 63, 28, 0.18);
   --white-accent: #f2c17a;
   --black-accent: #7fa8f7;
+  --board-max-size: 760px;
 }
 
 @import url("https://fonts.googleapis.com/css2?family=Jua&display=swap");
@@ -385,6 +386,7 @@ button {
   display: grid;
   grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) minmax(250px, 320px);
   gap: 18px;
+  align-items: start;
 }
 
 .sidebar-panel {
@@ -492,6 +494,8 @@ button {
   border-radius: 28px;
   box-shadow: var(--shadow);
   padding: 18px;
+  display: grid;
+  align-content: start;
 }
 
 .board-panel-head {
@@ -500,6 +504,8 @@ button {
   gap: 18px;
   align-items: flex-start;
   margin-bottom: 16px;
+  width: min(100%, var(--board-max-size));
+  margin-inline: auto;
 }
 
 .board-note {
@@ -513,6 +519,8 @@ button {
   background:
     radial-gradient(circle at top, rgba(255, 255, 255, 0.4), transparent 34%),
     linear-gradient(180deg, #d4a66f, var(--board-edge));
+  width: min(100%, var(--board-max-size));
+  margin-inline: auto;
 }
 
 .board-grid {
@@ -522,6 +530,7 @@ button {
   overflow: hidden;
   border-radius: 20px;
   border: 4px solid rgba(80, 56, 27, 0.16);
+  width: 100%;
 }
 
 .board-empty {

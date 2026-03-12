@@ -155,6 +155,14 @@
     _initWorker() {
       this._teardownWorker();
 
+      if (typeof window !== "undefined" && window.location?.protocol === "file:") {
+        this._markUnavailable(this._createBridgeError(
+          "AI and coach need http://localhost or a deployed site. Browsers block worker scripts on file:// pages.",
+          "worker-file-origin"
+        ));
+        return false;
+      }
+
       try {
         const workerTarget = typeof window !== "undefined" && typeof URL !== "undefined"
           ? new URL(this.workerPath, window.location.href)
