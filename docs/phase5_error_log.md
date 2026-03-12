@@ -14,6 +14,12 @@ Track archive, post-game analysis, review cards, play-from-here, and legacy-isol
 
 ## Resolved issues
 
+- 2026-03-12 22:51
+  - Symptom: The post-game result modal let the critical-moment cards grow until the bottom action buttons were partially hidden.
+  - Cause: The result overlay used the generic modal layout, so the analysis card list expanded with content instead of becoming the only scroll region.
+  - Fix: Added a dedicated `result-card` layout in `index.html` and `css/style.css`, bounded the modal height, and moved scrolling responsibility to the analysis-card list.
+  - Result: The result summary stays visible, the critical-moment cards scroll internally, and the bottom action buttons remain reachable.
+
 - 2026-03-12 19:20
   - Symptom: The first headless AI ladder report produced impossible color splits such as white-side score rates over 100%.
   - Cause: The simulator aggregated `whiteScoreRate` and `blackScoreRate` using total draws instead of color-specific draws.

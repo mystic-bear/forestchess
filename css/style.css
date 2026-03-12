@@ -916,6 +916,37 @@ button {
   padding: 26px;
 }
 
+.result-card {
+  width: min(620px, 100%);
+  max-height: min(88vh, 840px);
+  display: grid;
+  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.result-card .analysis-progress {
+  flex-shrink: 0;
+}
+
+.result-card .analysis-card-list {
+  min-height: 0;
+  max-height: min(34vh, 350px);
+  overflow: auto;
+  padding-right: 8px;
+  align-content: start;
+}
+
+.result-card .analysis-card {
+  min-height: 210px;
+}
+
+.result-card .overlay-actions {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--panel-line);
+  background: linear-gradient(180deg, rgba(255, 252, 244, 0), rgba(255, 252, 244, 0.92) 28%, rgba(255, 252, 244, 0.98));
+}
+
 .review-summary {
   margin-top: 14px;
   display: grid;
@@ -1159,6 +1190,18 @@ button {
   .setup-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .result-card {
+    max-height: min(92vh, 900px);
+  }
+
+  .result-card .analysis-card-list {
+    max-height: min(32vh, 300px);
+  }
+
+  .result-card .analysis-card {
+    min-height: 180px;
   }
 
   .promotion-options {
