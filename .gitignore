@@ -1,10 +1,10 @@
 full_code*.md
+!legacy_code/full_code_*.md
 
 backup/
 *.zip
 
 legacy/
-test/
 
 .DS_Store
 Thumbs.db
