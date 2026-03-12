@@ -8,9 +8,9 @@
   "use strict";
 
   const DEFAULT_BROWSER_ENGINE_PATHS = [
-    "../stockfish-18-lite.js",
     "../stockfish-18-lite-single.js",
-    "../stockfish-18-asm.js"
+    "../stockfish-18-asm.js",
+    "../stockfish-18-lite.js"
   ];
 
   const DEFAULT_NODE_ENGINE_PATHS = [
@@ -117,7 +117,10 @@
   }
 
   function createBrowserTransport(enginePath) {
-    const worker = new Worker(enginePath);
+    const resolvedPath = typeof URL !== "undefined" && typeof self !== "undefined" && self.location
+      ? new URL(enginePath, self.location.href).toString()
+      : enginePath;
+    const worker = new Worker(resolvedPath);
     let onLine = null;
     let onError = null;
 

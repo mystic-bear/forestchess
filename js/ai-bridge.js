@@ -156,7 +156,10 @@
       this._teardownWorker();
 
       try {
-        this.worker = new Worker(this.workerPath);
+        const workerTarget = typeof window !== "undefined" && typeof URL !== "undefined"
+          ? new URL(this.workerPath, window.location.href)
+          : this.workerPath;
+        this.worker = new Worker(workerTarget);
       } catch (error) {
         this._markUnavailable(this._createBridgeError(error, "worker-init-failed"));
         return false;

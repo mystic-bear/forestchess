@@ -89,3 +89,51 @@
 ### Result
 
 - `test/phase2-static-smoke.js` passes again and now reflects the live UI structure.
+
+---
+
+## 2026-03-12 14:54:01 - Custom Setup Panel Visible Before Click
+
+### Symptom
+
+- The custom setup card appeared on the start screen before pressing `Open custom setup`.
+- The panel rendered lower on the page instead of staying collapsed under the summary card.
+
+### Root Cause
+
+- `index.html` marked the setup panel with `class="hidden"`, but `css/style.css` only hid `.screen.hidden`.
+- Because there was no global `.hidden` rule, `#menu-setup` stayed visible at initial render.
+
+### Fix
+
+- Added a global `.hidden { display: none !important; }` rule.
+- Added an explicit `ui.hideSetup()` call during `js/app.js` bootstrap so the menu state is correct even if the DOM is re-rendered.
+
+### Result
+
+- The start screen now opens with only the summary card visible.
+- The full White/Black custom setup panel opens only after pressing the setup button.
+
+---
+
+## 2026-03-12 14:54:01 - Browser Engine Candidate Order Caused Practical AI Failure
+
+### Symptom
+
+- The browser app reported engine-unavailable behavior even though the Node smoke tests could boot the worker.
+- In-browser AI felt like it never started.
+
+### Root Cause
+
+- The browser candidate order preferred `stockfish-18-lite.js` before `stockfish-18-lite-single.js`.
+- The checked-in repo does not include the extra multithread helper asset that the lite multithread build expects, so the browser path could stall or fail before reaching a usable candidate.
+
+### Fix
+
+- Reordered browser engine candidates to prefer `stockfish-18-lite-single.js`, then `stockfish-18-asm.js`, with `stockfish-18-lite.js` moved behind them as a last fallback.
+- Kept the resolved-worker URL patch in `js/ai-bridge.js` and `worker/stockfish-adapter.js` so worker paths are built from absolute browser URLs.
+
+### Result
+
+- `phase3-choosemove-smoke` now reports `../stockfish-18-lite-single.js` as the active engine path.
+- Browser-targeted startup is aligned to the smaller, weaker, but actually runnable engine first.

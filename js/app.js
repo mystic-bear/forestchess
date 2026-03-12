@@ -15,6 +15,7 @@ window.game = game;
 
 ui.renderStart();
 ui.renderSetup();
+ui.hideSetup();
 ui.showScreen("start-screen");
 ui.updateAll();
 

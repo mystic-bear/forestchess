@@ -78,9 +78,9 @@
   };
 
   const ENGINE_ASSET_CANDIDATES = [
-    "../stockfish-18-lite.js",
     "../stockfish-18-lite-single.js",
-    "../stockfish-18-asm.js"
+    "../stockfish-18-asm.js",
+    "../stockfish-18-lite.js"
   ];
 
   const QUICK_PRESETS = [
@@ -127,12 +127,12 @@
   ];
 
   const PIECE_THEME = {
-    k: { animal: "Bear", chess: "King", emoji: "B" },
-    q: { animal: "Rabbit", chess: "Queen", emoji: "Q" },
-    r: { animal: "Elephant", chess: "Rook", emoji: "R" },
-    b: { animal: "Fox", chess: "Bishop", emoji: "B" },
-    n: { animal: "Puppy", chess: "Knight", emoji: "N" },
-    p: { animal: "Cat", chess: "Pawn", emoji: "P" }
+    k: { animal: "곰", chess: "킹", emoji: "🐻" },
+    q: { animal: "토끼", chess: "퀸", emoji: "🐰" },
+    r: { animal: "코끼리", chess: "룩", emoji: "🐘" },
+    b: { animal: "여우", chess: "비숍", emoji: "🦊" },
+    n: { animal: "강아지", chess: "나이트", emoji: "🐶" },
+    p: { animal: "고양이", chess: "폰", emoji: "🐱" }
   };
 
   const PIECE_LABEL_MODES = [

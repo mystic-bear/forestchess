@@ -250,6 +250,9 @@ const ui = {
         }
 
         if (piece) {
+          const pieceTitle = getPieceDisplayLabel(piece, "both");
+          button.title = pieceTitle;
+          button.setAttribute("aria-label", `${square} ${pieceTitle}`);
           button.appendChild(this.createPieceNode(piece, pieceColor));
         } else if (targetMoves.length > 0) {
           const target = document.createElement("span");
@@ -268,10 +271,10 @@ const ui = {
   createPieceNode(piece, pieceColor) {
     const wrapper = document.createElement("div");
     wrapper.className = `piece ${pieceColor === "w" ? "white" : "black"}`;
-    wrapper.innerHTML = `
-      <div class="piece-emoji">${getPieceEmoji(piece)}</div>
-      <div class="piece-label">${getPieceDisplayLabel(piece, game.pieceLabelMode)}</div>
-    `;
+    const pieceTitle = getPieceDisplayLabel(piece, "both");
+    wrapper.title = pieceTitle;
+    wrapper.setAttribute("aria-label", pieceTitle);
+    wrapper.innerHTML = `<div class="piece-emoji">${getPieceEmoji(piece)}</div>`;
     return wrapper;
   },
 
