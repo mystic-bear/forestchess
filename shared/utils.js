@@ -11,6 +11,15 @@
   const PIECE_THEME_LOCAL = root.PIECE_THEME || {};
   const PLAYER_INFO_LOCAL = root.PLAYER_INFO || {};
   const PLAYER_ORDER_LOCAL = root.PLAYER_ORDER || ["white", "black"];
+  const HINT_STAGE_INFO_LOCAL = root.HINT_STAGE_INFO || {};
+  const DEFAULT_LANGUAGE = root.DEFAULT_LANGUAGE || "ko";
+  const translateUi = root.translateUi || ((language, key, params = {}) => {
+    const fallback = String(key || "");
+    return fallback.replace(/\{(\w+)\}/g, (_, token) => {
+      const value = params[token];
+      return value === undefined || value === null ? "" : String(value);
+    });
+  });
 
   const deepCopy = (value) => JSON.parse(JSON.stringify(value));
 
@@ -22,19 +31,38 @@
     return Number.isInteger(level) ? level : null;
   };
 
-  const getSetupStateLabel = (state, compact = false) => {
-    if (state === "HUMAN") return compact ? "Human" : "Human player";
-    const level = getAiLevelFromState(state);
-    const info = AI_LEVEL_INFO_LOCAL[level];
-    return compact ? (info?.short || state) : (info?.label || state);
+  const resolveLocalizedText = (value, language = DEFAULT_LANGUAGE) => {
+    if (value === undefined || value === null) return "";
+    if (typeof value === "string") return value;
+    if (Array.isArray(value)) return value;
+    if (typeof value === "object") {
+      return value[language]
+        ?? value[DEFAULT_LANGUAGE]
+        ?? value.en
+        ?? Object.values(value)[0]
+        ?? "";
+    }
+    return String(value);
   };
 
-  const getSetupStateDescription = (state) => {
-    if (state === "HUMAN") return "Manual local control.";
+  const getSetupStateLabel = (state, compact = false, language = DEFAULT_LANGUAGE) => {
+    if (state === "HUMAN") {
+      return compact
+        ? translateUi(language, "setup.state.humanShort")
+        : translateUi(language, "setup.state.human");
+    }
     const level = getAiLevelFromState(state);
     const info = AI_LEVEL_INFO_LOCAL[level];
-    if (!info) return "Engine control.";
-    return `${info.desc} Stockfish profile.`;
+    return compact ? (info?.short || state) : (resolveLocalizedText(info?.label, language) || state);
+  };
+
+  const getSetupStateDescription = (state, language = DEFAULT_LANGUAGE) => {
+    if (state === "HUMAN") return translateUi(language, "setup.state.humanDesc");
+    const level = getAiLevelFromState(state);
+    const info = AI_LEVEL_INFO_LOCAL[level];
+    const desc = resolveLocalizedText(info?.desc, language);
+    if (!desc) return translateUi(language, "engine.unavailable");
+    return translateUi(language, "setup.state.aiDescription", { desc });
   };
 
   const getPieceTypeFromCode = (pieceOrType) => {
@@ -46,17 +74,21 @@
 
   const getPieceEmoji = (pieceOrType) => getPieceThemeInfo(pieceOrType)?.emoji || "";
 
-  const getPieceDisplayLabel = (pieceOrType, mode = "both") => {
+  const getPieceDisplayLabel = (pieceOrType, mode = "both", language = DEFAULT_LANGUAGE) => {
     const info = getPieceThemeInfo(pieceOrType);
     if (!info) return "";
-    if (mode === "animal") return info.animal;
-    if (mode === "chess") return info.chess;
-    return `${info.animal} (${info.chess})`;
+    const animal = resolveLocalizedText(info.animal, language);
+    const chess = resolveLocalizedText(info.chess, language);
+    if (mode === "animal") return animal;
+    if (mode === "chess") return chess;
+    return `${animal} (${chess})`;
   };
 
   const getPlayerColorKey = (turn) => (turn === "w" ? "white" : "black");
 
-  const getPlayerLabel = (colorKey) => PLAYER_INFO_LOCAL[colorKey]?.label || colorKey;
+  const getPlayerLabel = (colorKey, language = DEFAULT_LANGUAGE) => (
+    resolveLocalizedText(PLAYER_INFO_LOCAL[colorKey]?.label, language) || colorKey
+  );
 
   const cycleOptionKey = (options, currentKey) => {
     const index = options.findIndex((option) => option.key === currentKey);
@@ -76,45 +108,48 @@
     return rows;
   };
 
-  const formatStatusReason = (status) => {
+  const formatStatusReason = (status, language = DEFAULT_LANGUAGE) => {
     if (!status) return "";
-    if (status.reason === "checkmate") return "Checkmate";
-    if (status.reason === "stalemate") return "Stalemate";
-    if (status.reason === "insufficient-material") return "Draw by insufficient material";
-    if (status.reason === "threefold-repetition") return "Threefold repetition available";
-    if (status.reason === "fifty-move-rule") return "Fifty-move draw available";
+    if (status.reason === "checkmate") return translateUi(language, "reason.checkmate");
+    if (status.reason === "stalemate") return translateUi(language, "reason.stalemate");
+    if (status.reason === "insufficient-material") return translateUi(language, "reason.insufficient-material");
+    if (status.reason === "threefold-repetition") return translateUi(language, "reason.threefold-repetition");
+    if (status.reason === "fifty-move-rule") return translateUi(language, "reason.fifty-move-rule");
     return "";
   };
 
-  const buildSetupSummary = (setupPlayers) => (
+  const buildSetupSummary = (setupPlayers, language = DEFAULT_LANGUAGE) => (
     PLAYER_ORDER_LOCAL
-      .map((colorKey) => `${PLAYER_INFO_LOCAL[colorKey]?.label || colorKey}: ${getSetupStateLabel(setupPlayers[colorKey], true)}`)
+      .map((colorKey) => `${getPlayerLabel(colorKey, language)}: ${getSetupStateLabel(setupPlayers[colorKey], true, language)}`)
       .join(" / ")
   );
 
-  const describeHintStage = (level) => {
-    if (level === 1) return "Direction";
-    if (level === 2) return "Candidate";
-    return "Exact move";
+  const describeHintStage = (level, language = DEFAULT_LANGUAGE) => {
+    const entry = HINT_STAGE_INFO_LOCAL[level];
+    return resolveLocalizedText(entry?.label, language) || String(level);
   };
 
   const safeArray = (value) => (Array.isArray(value) ? value : []);
 
-  const formatEngineScore = (scoreCp, scoreMate) => {
+  const formatEngineScore = (scoreCp, scoreMate, language = DEFAULT_LANGUAGE) => {
     if (Number.isInteger(scoreMate)) {
+      if (language === "ko") {
+        return scoreMate > 0 ? `${scoreMate}수 메이트` : `${Math.abs(scoreMate)}수 후 메이트 당함`;
+      }
       return scoreMate > 0 ? `Mate in ${scoreMate}` : `Mated in ${Math.abs(scoreMate)}`;
     }
     if (typeof scoreCp === "number") {
       const pawns = Math.abs(scoreCp / 100).toFixed(2);
       return `${scoreCp >= 0 ? "+" : "-"}${pawns}`;
     }
-    return "n/a";
+    return language === "ko" ? "없음" : "n/a";
   };
 
   return {
     deepCopy,
     isAiState,
     getAiLevelFromState,
+    resolveLocalizedText,
     getSetupStateLabel,
     getSetupStateDescription,
     getPieceTypeFromCode,

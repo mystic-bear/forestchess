@@ -1,4 +1,9 @@
 const ui = {
+  t(key, params = {}) {
+    const language = window.game?.language || DEFAULT_LANGUAGE;
+    return translateUi(language, key, params);
+  },
+
   showScreen(id) {
     document.querySelectorAll(".screen").forEach((screen) => screen.classList.add("hidden"));
     const target = document.getElementById(id);
@@ -17,10 +22,33 @@ const ui = {
     this.renderStart();
   },
 
+  applyStaticText() {
+    const language = window.game?.language || DEFAULT_LANGUAGE;
+    document.documentElement.lang = language;
+    document.title = this.t("document.title");
+    document.querySelectorAll("[data-i18n]").forEach((node) => {
+      node.innerText = this.t(node.dataset.i18n);
+    });
+  },
+
+  renderLanguageSelector() {
+    const container = document.getElementById("language-switcher");
+    if (!container || !window.game) return;
+
+    container.innerHTML = "";
+    LANGUAGE_OPTIONS.forEach((entry) => {
+      const button = document.createElement("button");
+      button.className = `language-btn ${game.language === entry.key ? "active" : ""}`;
+      button.innerText = entry.nativeLabel;
+      button.onclick = () => game.setLanguage(entry.key);
+      container.appendChild(button);
+    });
+  },
+
   renderStart() {
     const presetList = document.getElementById("quick-start-list");
     const summary = document.getElementById("setup-summary");
-    if (!presetList || !summary) return;
+    if (!presetList || !summary || !window.game) return;
 
     presetList.innerHTML = "";
     QUICK_PRESETS.forEach((preset) => {
@@ -29,10 +57,10 @@ const ui = {
       button.disabled = !preset.enabled;
       button.innerHTML = `
         <div class="preset-top">
-          <div class="preset-title">${preset.label}</div>
-          <div class="preset-chip">${preset.subtitle}</div>
+          <div class="preset-title">${resolveLocalizedText(preset.label, game.language)}</div>
+          <div class="preset-chip">${resolveLocalizedText(preset.subtitle, game.language)}</div>
         </div>
-        <div class="preset-detail">${preset.detail}</div>
+        <div class="preset-detail">${resolveLocalizedText(preset.detail, game.language)}</div>
       `;
       if (preset.enabled) {
         button.onclick = () => game.applyPreset(preset.key);
@@ -41,15 +69,15 @@ const ui = {
     });
 
     summary.innerHTML = `
-      <div class="setup-summary-title">Current setup</div>
-      <div class="setup-summary-body">${buildSetupSummary(game.setupPlayers)}</div>
+      <div class="setup-summary-title">${this.t("start.currentSetup")}</div>
+      <div class="setup-summary-body">${buildSetupSummary(game.setupPlayers, game.language)}</div>
     `;
   },
 
   renderSetup() {
     const playerList = document.getElementById("setup-player-list");
     const optionList = document.getElementById("setup-option-list");
-    if (!playerList || !optionList) return;
+    if (!playerList || !optionList || !window.game) return;
 
     playerList.innerHTML = "";
     PLAYER_ORDER.forEach((colorKey) => {
@@ -61,11 +89,11 @@ const ui = {
         <div class="setup-main">
           <div class="setup-icon ${colorKey}">${player.icon}</div>
           <div>
-            <div class="setup-title">${player.label}</div>
-            <div class="setup-desc">${getSetupStateDescription(state)}</div>
+            <div class="setup-title">${resolveLocalizedText(player.label, game.language)}</div>
+            <div class="setup-desc">${getSetupStateDescription(state, game.language)}</div>
           </div>
         </div>
-        <button class="state-btn ${isAiState(state) ? "ai" : "human"}">${getSetupStateLabel(state)}</button>
+        <button class="state-btn ${isAiState(state) ? "ai" : "human"}">${getSetupStateLabel(state, false, game.language)}</button>
       `;
       row.querySelector("button").onclick = () => game.cycleSetupState(colorKey);
       playerList.appendChild(row);
@@ -75,15 +103,15 @@ const ui = {
     const orientation = BOARD_ORIENTATION_OPTIONS.find((entry) => entry.key === game.boardOrientation) || BOARD_ORIENTATION_OPTIONS[0];
     const options = [
       {
-        title: "Piece labels",
-        desc: "Switch between animal names, chess names, or both.",
-        buttonLabel: labelMode.label,
+        title: this.t("setup.option.pieceLabels.title"),
+        desc: this.t("setup.option.pieceLabels.desc"),
+        buttonLabel: resolveLocalizedText(labelMode.label, game.language),
         action: () => game.cyclePieceLabelMode()
       },
       {
-        title: "Board orientation",
-        desc: "Choose which color sits at the bottom of the board.",
-        buttonLabel: orientation.label,
+        title: this.t("setup.option.boardOrientation.title"),
+        desc: this.t("setup.option.boardOrientation.desc"),
+        buttonLabel: resolveLocalizedText(orientation.label, game.language),
         action: () => game.cycleBoardOrientationSetting()
       }
     ];
@@ -111,19 +139,19 @@ const ui = {
 
   updateSetupStartButton() {
     const button = document.getElementById("btn-start-match");
-    if (!button) return;
+    if (!button || !window.game) return;
 
     button.disabled = !game.canStartMatch();
     if (game.hasAiConfigured() && !game.canUseAi()) {
-      button.innerText = "Start local board";
+      button.innerText = this.t("buttons.startLocalBoard");
       return;
     }
-    button.innerText = "Start match";
+    button.innerText = this.t("buttons.startMatch");
   },
 
   renderPlayerPanels() {
     const container = document.getElementById("player-panel-list");
-    if (!container) return;
+    if (!container || !window.game) return;
     container.innerHTML = "";
 
     PLAYER_ORDER.forEach((colorKey) => {
@@ -138,12 +166,12 @@ const ui = {
       card.innerHTML = `
         <div class="player-card-top">
           <div>
-            <div class="player-name">${player.label}</div>
-            <div class="player-sub">${getSetupStateLabel(type, true)}</div>
+            <div class="player-name">${resolveLocalizedText(player.label, game.language)}</div>
+            <div class="player-sub">${getSetupStateLabel(type, true, game.language)}</div>
           </div>
-          <div class="player-badge ${colorKey}">${currentTurn ? "To move" : "Waiting"}</div>
+          <div class="player-badge ${colorKey}">${currentTurn ? this.t("player.toMove") : this.t("player.waiting")}</div>
         </div>
-        <div class="player-meta">${inCheck ? "In check" : game.aiThinking && currentTurn ? "Engine searching" : "Stable"}</div>
+        <div class="player-meta">${inCheck ? this.t("player.inCheck") : game.aiThinking && currentTurn ? this.t("player.engineSearching") : this.t("player.stable")}</div>
       `;
       container.appendChild(card);
     });
@@ -151,7 +179,7 @@ const ui = {
 
   renderThemeLegend() {
     const container = document.getElementById("theme-legend");
-    if (!container) return;
+    if (!container || !window.game) return;
     container.innerHTML = "";
 
     Object.entries(PIECE_THEME).forEach(([pieceType, info]) => {
@@ -159,7 +187,7 @@ const ui = {
       item.className = "legend-item";
       item.innerHTML = `
         <div class="legend-emoji">${info.emoji}</div>
-        <div class="legend-label">${getPieceDisplayLabel(pieceType, game.pieceLabelMode)}</div>
+        <div class="legend-label">${getPieceDisplayLabel(pieceType, game.pieceLabelMode, game.language)}</div>
       `;
       container.appendChild(item);
     });
@@ -174,20 +202,28 @@ const ui = {
     const statusLine = document.getElementById("status-line");
     const engineChip = document.getElementById("engine-chip");
 
-    if (!boardShell) return;
+    if (!boardShell || !window.game) return;
 
     if (statusLine) statusLine.innerText = game.getStatusBanner();
     if (boardNote) boardNote.innerText = game.getBoardNote();
-    if (turnChip) turnChip.innerText = `Turn ${game.currentState ? getPlayerLabel(game.getTurnColorKey()) : "-"}`;
-    if (lastMoveChip) lastMoveChip.innerText = `Last ${game.lastMove ? game.lastMove.san : "-"}`;
+    if (turnChip) {
+      turnChip.innerText = this.t("board.turnChip", {
+        player: game.currentState ? getPlayerLabel(game.getTurnColorKey(), game.language) : "-"
+      });
+    }
+    if (lastMoveChip) {
+      lastMoveChip.innerText = this.t("board.lastChip", {
+        move: game.lastMove ? game.lastMove.san : "-"
+      });
+    }
     if (claimChip) {
-      claimChip.innerText = game.canClaimDraw() ? game.getClaimDrawLabel() : "No draw";
+      claimChip.innerText = game.canClaimDraw() ? game.getClaimDrawLabel() : this.t("board.noDraw");
       claimChip.classList.toggle("muted", !game.canClaimDraw());
     }
     if (engineChip) engineChip.innerText = game.getEngineBadgeLabel();
 
     if (!game.currentState) {
-      boardShell.innerHTML = `<div class="board-empty">Start a match to load the chess board.</div>`;
+      boardShell.innerHTML = `<div class="board-empty">${this.t("board.empty")}</div>`;
       return;
     }
 
@@ -250,7 +286,7 @@ const ui = {
         }
 
         if (piece) {
-          const pieceTitle = getPieceDisplayLabel(piece, "both");
+          const pieceTitle = getPieceDisplayLabel(piece, "both", game.language);
           button.title = pieceTitle;
           button.setAttribute("aria-label", `${square} ${pieceTitle}`);
           button.appendChild(this.createPieceNode(piece, pieceColor));
@@ -271,7 +307,7 @@ const ui = {
   createPieceNode(piece, pieceColor) {
     const wrapper = document.createElement("div");
     wrapper.className = `piece ${pieceColor === "w" ? "white" : "black"}`;
-    const pieceTitle = getPieceDisplayLabel(piece, "both");
+    const pieceTitle = getPieceDisplayLabel(piece, "both", game.language);
     wrapper.title = pieceTitle;
     wrapper.setAttribute("aria-label", pieceTitle);
     wrapper.innerHTML = `<div class="piece-emoji">${getPieceEmoji(piece)}</div>`;
@@ -280,7 +316,7 @@ const ui = {
 
   renderInfoPanel() {
     const panel = document.getElementById("info-panel");
-    if (!panel) return;
+    if (!panel || !window.game) return;
 
     const info = game.getInfoPanelContent();
     panel.innerHTML = `
@@ -291,13 +327,13 @@ const ui = {
 
   renderHintPanel() {
     const panel = document.getElementById("hint-panel");
-    if (!panel) return;
+    if (!panel || !window.game) return;
 
     if (!game.currentState) {
       panel.innerHTML = `
         <div class="hint-empty">
-          <div class="hint-title">Coach panel</div>
-          <div class="hint-line">Start a match to request Stockfish-backed hints.</div>
+          <div class="hint-title">${this.t("panel.coachPanel")}</div>
+          <div class="hint-line">${this.t("hint.emptyStart")}</div>
         </div>
       `;
       return;
@@ -307,8 +343,8 @@ const ui = {
     if (!session) {
       panel.innerHTML = `
         <div class="hint-empty">
-          <div class="hint-title">Coach panel</div>
-          <div class="hint-line">Use the coach button when you want guidance for the current position.</div>
+          <div class="hint-title">${this.t("panel.coachPanel")}</div>
+          <div class="hint-line">${this.t("hint.emptyUse")}</div>
         </div>
       `;
       return;
@@ -321,10 +357,10 @@ const ui = {
       panel.innerHTML = `
         <div class="hint-card">
           <div class="hint-header-row">
-            <div class="hint-title">Coach panel</div>
-            <div class="hint-chip">${session.loading ? "Analyzing" : "Waiting"}</div>
+            <div class="hint-title">${this.t("panel.coachPanel")}</div>
+            <div class="hint-chip">${session.loading ? this.t("hint.analyzing") : this.t("hint.waiting")}</div>
           </div>
-          <div class="hint-line">The engine is still preparing the first hint.</div>
+          <div class="hint-line">${this.t("hint.analysisPreparing")}</div>
         </div>
       `;
       return;
@@ -344,15 +380,16 @@ const ui = {
     `).join("");
 
     const steps = (stage?.steps || packet.steps || []).map((step) => `<li>${step}</li>`).join("");
+    const confidenceLabel = packet.confidence ? this.t(`hint.confidence.${packet.confidence}`) : this.t("hint.confidence.medium");
 
     panel.innerHTML = `
       <div class="hint-card ${packet.partial ? "partial" : ""}">
         <div class="hint-header-row">
           <div>
             <div class="hint-title">${packet.title}</div>
-            <div class="hint-subtitle">${packet.partial ? "Partial analysis" : "Full analysis"}</div>
+            <div class="hint-subtitle">${packet.partial ? this.t("hint.partialAnalysis") : this.t("hint.fullAnalysis")}</div>
           </div>
-          <div class="hint-chip">${packet.confidence || "medium"}</div>
+          <div class="hint-chip">${confidenceLabel}</div>
         </div>
         <div class="hint-stage-row">${stageRow}</div>
         <div class="hint-summary">${stage?.summary || packet.summary}</div>
@@ -360,14 +397,14 @@ const ui = {
         <div class="hint-reason">${stage?.reason || packet.reason || ""}</div>
         <ul class="hint-steps">${steps}</ul>
         <div class="hint-meta-row">
-          <div class="hint-meta"><strong>Move</strong> ${packet.moveSan || packet.moveUci || "-"}</div>
-          <div class="hint-meta"><strong>Threat</strong> ${packet.threatSummary || "-"}</div>
+          <div class="hint-meta"><strong>${this.t("hint.meta.move")}</strong> ${packet.moveSan || packet.moveUci || "-"}</div>
+          <div class="hint-meta"><strong>${this.t("hint.meta.threat")}</strong> ${packet.threatSummary || "-"}</div>
         </div>
         <div class="hint-meta-row">
-          <div class="hint-meta"><strong>From</strong> ${packet.from || "-"}</div>
-          <div class="hint-meta"><strong>To</strong> ${packet.to || "-"}</div>
+          <div class="hint-meta"><strong>${this.t("hint.meta.from")}</strong> ${packet.from || "-"}</div>
+          <div class="hint-meta"><strong>${this.t("hint.meta.to")}</strong> ${packet.to || "-"}</div>
         </div>
-        ${alternatives ? `<div class="hint-alt-block"><div class="hint-alt-title">Alternatives</div>${alternatives}</div>` : ""}
+        ${alternatives ? `<div class="hint-alt-block"><div class="hint-alt-title">${this.t("hint.meta.alternatives")}</div>${alternatives}</div>` : ""}
         ${packet.truncationNote ? `<div class="hint-note">${packet.truncationNote}</div>` : ""}
         ${session.error ? `<div class="hint-note warn">${session.error}</div>` : ""}
       </div>
@@ -377,19 +414,19 @@ const ui = {
   renderCapturedPieces() {
     const whiteContainer = document.getElementById("captured-white");
     const blackContainer = document.getElementById("captured-black");
-    if (!whiteContainer || !blackContainer) return;
+    if (!whiteContainer || !blackContainer || !window.game) return;
 
     const renderList = (container, items) => {
       container.innerHTML = "";
       if (items.length === 0) {
-        container.innerHTML = `<div class="capture-empty">None</div>`;
+        container.innerHTML = `<div class="capture-empty">${this.t("capture.none")}</div>`;
         return;
       }
 
       items.forEach((pieceType) => {
         const chip = document.createElement("div");
         chip.className = "capture-chip";
-        chip.innerHTML = `<span>${getPieceEmoji(pieceType)}</span><span>${getPieceDisplayLabel(pieceType, game.pieceLabelMode)}</span>`;
+        chip.innerHTML = `<span>${getPieceEmoji(pieceType)}</span><span>${getPieceDisplayLabel(pieceType, game.pieceLabelMode, game.language)}</span>`;
         container.appendChild(chip);
       });
     };
@@ -400,11 +437,11 @@ const ui = {
 
   renderMoveList() {
     const container = document.getElementById("move-list");
-    if (!container) return;
+    if (!container || !window.game) return;
     container.innerHTML = "";
 
     if (game.moveHistory.length === 0) {
-      container.innerHTML = `<div class="move-empty">Waiting for the first move.</div>`;
+      container.innerHTML = `<div class="move-empty">${this.t("moves.waiting")}</div>`;
       return;
     }
 
@@ -425,7 +462,7 @@ const ui = {
   renderPromotionModal() {
     const modal = document.getElementById("promotion-modal");
     const options = document.getElementById("promotion-options");
-    if (!modal || !options) return;
+    if (!modal || !options || !window.game) return;
 
     if (!game.pendingPromotion) {
       modal.classList.add("hidden");
@@ -440,7 +477,7 @@ const ui = {
       button.className = "promotion-btn";
       button.innerHTML = `
         <div class="promotion-emoji">${getPieceEmoji(move.promotion)}</div>
-        <div class="promotion-label">${getPieceDisplayLabel(move.promotion, game.pieceLabelMode)}</div>
+        <div class="promotion-label">${getPieceDisplayLabel(move.promotion, game.pieceLabelMode, game.language)}</div>
       `;
       button.onclick = () => game.applyPromotionChoice(move.promotion);
       options.appendChild(button);
@@ -451,7 +488,7 @@ const ui = {
     const modal = document.getElementById("result-modal");
     const title = document.getElementById("result-title");
     const text = document.getElementById("result-text");
-    if (!modal || !title || !text) return;
+    if (!modal || !title || !text || !window.game) return;
 
     const summary = game.getResultSummary();
     if (!summary) {
@@ -472,7 +509,7 @@ const ui = {
     if (undoButton) undoButton.disabled = !game.canUndo();
     if (drawButton) {
       drawButton.disabled = !game.canClaimDraw();
-      drawButton.innerText = game.canClaimDraw() ? game.getClaimDrawLabel() : "Claim draw";
+      drawButton.innerText = game.canClaimDraw() ? game.getClaimDrawLabel() : this.t("buttons.claimDraw");
     }
     if (hintButton) {
       hintButton.disabled = !game.currentState || game.isGameOver() || game.pendingPromotion || !game.canUseCoach();
@@ -481,6 +518,8 @@ const ui = {
   },
 
   updateAll() {
+    this.applyStaticText();
+    this.renderLanguageSelector();
     this.renderStart();
     this.renderSetup();
     this.renderPlayerPanels();

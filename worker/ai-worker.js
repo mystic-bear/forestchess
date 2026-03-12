@@ -16,7 +16,10 @@
 
   if (isNodeRuntime) {
     const { parentPort } = require("node:worker_threads");
-    constants = require("../shared/constants.js");
+    constants = {
+      ...require("../shared/i18n.js"),
+      ...require("../shared/constants.js")
+    };
     ChessState = require("../js/chess/chess-state.js");
     ChessRules = require("../js/chess/rules.js");
     StockfishAdapter = require("./stockfish-adapter.js");
@@ -25,6 +28,7 @@
     postMessageSafe = (payload) => parentPort.postMessage(payload);
   } else {
     importScripts(
+      "../shared/i18n.js",
       "../shared/constants.js",
       "../js/chess/chess-state.js",
       "../js/chess/rules.js",
@@ -42,8 +46,12 @@
     postMessageSafe = (payload) => globalScope.postMessage(payload);
   }
 
-  const { AI_LEVEL_INFO, COACH_PROFILE, ENGINE_ASSET_CANDIDATES } = constants;
+  const { AI_LEVEL_INFO, COACH_PROFILE, ENGINE_ASSET_CANDIDATES, translateUi, DEFAULT_LANGUAGE } = constants;
   let engineSessionPromise = null;
+
+  function t(gameState, key, params = {}) {
+    return translateUi((gameState && gameState.language) || DEFAULT_LANGUAGE || "ko", key, params);
+  }
 
   function post(payload) {
     postMessageSafe(payload);
@@ -101,17 +109,17 @@
     hint.partial = false;
     hint.searchPhase = "terminal";
     hint.summary = status.checkmate
-      ? "The game is already over by checkmate."
+      ? t(gameState, "coach.terminalCheckmate")
       : status.stalemate
-        ? "The game is already drawn by stalemate."
-        : "No legal move remains.";
+        ? t(gameState, "coach.terminalStalemate")
+        : t(gameState, "coach.terminalNoLegal");
     hint.leadText = hint.summary;
     hint.reason = status.checkmate
-      ? "There is no legal move that saves the king."
+      ? t(gameState, "coach.terminalNoSave")
       : status.stalemate
-        ? "The side to move has no legal move but is not in check."
-        : "No legal move remains.";
-    hint.steps = ["Start a new game or review the previous move."];
+        ? t(gameState, "coach.terminalStalemateReason")
+        : t(gameState, "coach.terminalNoLegal");
+    hint.steps = [t(gameState, "coach.terminalStep")];
     hint.truncationNote = null;
     return hint;
   }

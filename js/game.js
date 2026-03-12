@@ -2,6 +2,7 @@
   let deps;
   if (typeof module !== "undefined" && module.exports) {
     deps = {
+      ...require("../shared/i18n.js"),
       ...require("../shared/constants.js"),
       ...require("../shared/utils.js"),
       ChessState: require("./chess/chess-state.js"),
@@ -20,6 +21,9 @@
   "use strict";
 
   const {
+    DEFAULT_LANGUAGE,
+    isSupportedLanguage,
+    translateUi,
     DEFAULT_SETUP,
     QUICK_PRESETS,
     PLAYER_ORDER,
@@ -30,6 +34,7 @@
     deepCopy,
     isAiState,
     getAiLevelFromState,
+    resolveLocalizedText,
     getPlayerColorKey,
     getPlayerLabel,
     cycleOptionKey,
@@ -38,11 +43,13 @@
 
   const ChessState = deps.ChessState;
   const ChessRules = deps.ChessRules;
+  const LANGUAGE_STORAGE_KEY = "forest-chess-language";
 
   class Game {
     constructor(options = {}) {
       this.aiBridge = options.aiBridge || null;
       this.ui = options.ui || null;
+      this.language = this.loadLanguageSetting();
       this.setupPlayers = deepCopy(DEFAULT_SETUP);
       this.whitePlayerType = DEFAULT_SETUP.white;
       this.blackPlayerType = DEFAULT_SETUP.black;
@@ -58,9 +65,53 @@
       this.coachSystemEnabled = !this.aiBridge || this.aiBridge.available !== false;
       this.engineStatus = {
         state: this.aiSystemEnabled ? "idle" : "unavailable",
-        message: this.aiBridge?.lastError?.message || ""
+        message: this.getEngineMessage(this.aiBridge?.lastError)
       };
       this.resetSession();
+    }
+
+    loadLanguageSetting() {
+      try {
+        const stored = typeof localStorage !== "undefined"
+          ? localStorage.getItem(LANGUAGE_STORAGE_KEY)
+          : null;
+        return isSupportedLanguage(stored) ? stored : DEFAULT_LANGUAGE;
+      } catch (error) {
+        return DEFAULT_LANGUAGE;
+      }
+    }
+
+    saveLanguageSetting(language) {
+      try {
+        if (typeof localStorage !== "undefined") {
+          localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+        }
+      } catch (error) {
+        // Ignore storage failures and keep the in-memory setting.
+      }
+    }
+
+    t(key, params = {}) {
+      return translateUi(this.language, key, params);
+    }
+
+    getEngineMessage(errorLike) {
+      const code = String(errorLike?.code || "");
+      if (code === "worker-file-origin") return this.t("engine.fileOrigin");
+      if (code === "worker-init-failed" || code === "engine-init-failed") return this.t("engine.initFailed");
+      if (code === "choose-move-timeout") return this.t("engine.moveFailed");
+      if (code === "hint-timeout") return this.t("engine.hintFailed");
+      if (code === "worker-unavailable" || code === "worker-crashed") return this.t("engine.unavailable");
+      if (errorLike?.message) return errorLike.message;
+      return "";
+    }
+
+    setLanguage(language) {
+      const nextLanguage = isSupportedLanguage(language) ? language : DEFAULT_LANGUAGE;
+      if (nextLanguage === this.language) return;
+      this.language = nextLanguage;
+      this.saveLanguageSetting(nextLanguage);
+      this.refreshUi();
     }
 
     setUi(ui) {
@@ -75,7 +126,7 @@
       if (!enabled) {
         this.engineStatus = {
           state: "unavailable",
-          message: aiBridge?.lastError?.message || "Engine worker unavailable."
+          message: this.getEngineMessage(aiBridge?.lastError) || this.t("engine.unavailable")
         };
       }
     }
@@ -213,7 +264,7 @@
       this.refreshUi();
 
       if ((isAiState(this.setupPlayers.white) || isAiState(this.setupPlayers.black)) && !this.canUseAi()) {
-        this.toast("Engine unavailable. This match will continue as a local board.");
+        this.toast(this.t("toast.engineUnavailableLocal"));
       }
 
       this.maybeRequestAiMove();
@@ -401,7 +452,7 @@
 
         this.refreshUi();
       } catch (error) {
-        this.toast("The move could not be applied.");
+        this.toast(this.t("toast.moveApplyFailed"));
         throw error;
       }
     }
@@ -415,7 +466,7 @@
       if (!this.pendingPromotion) return;
       const move = this.pendingPromotion.moves.find((candidate) => candidate.promotion === promotion);
       if (!move) {
-        this.toast("Pick a valid promotion piece.");
+        this.toast(this.t("toast.invalidPromotion"));
         return;
       }
       this.cancelPendingAsync();
@@ -484,6 +535,7 @@
         fen: this.currentState ? ChessState.serializeFen(this.currentState) : "",
         turn: this.currentState?.turn || null,
         hintMode: !!options.hintMode,
+        language: this.language,
         stateVersion: this.stateVersion,
         boardOrientation: this.boardOrientation,
         whitePlayerType: this.whitePlayerType,
@@ -502,9 +554,9 @@
         this.setConfiguredPlayerType(this.getTurnColorKey(), "HUMAN");
         this.engineStatus = {
           state: "unavailable",
-          message: this.engineStatus.message || "Engine unavailable. Continue locally."
+          message: this.engineStatus.message || this.t("engine.continueLocal")
         };
-        this.toast("Engine unavailable. Continue locally on the same board.");
+        this.toast(this.t("toast.engineUnavailableLocal"));
         this.refreshUi();
         return;
       }
@@ -517,11 +569,12 @@
 
       const stateVersion = this.stateVersion;
       const level = getAiLevelFromState(this.getTurnPlayerType()) || 1;
+      const currentTurnLabel = getPlayerLabel(this.getTurnColorKey(), this.language);
       this.aiThinking = true;
       this.inputLocked = true;
       this.engineStatus = {
         state: "thinking",
-        message: `${PLAYER_INFO[this.getTurnColorKey()].label} AI is thinking.`
+        message: this.t("status.aiThinking", { player: currentTurnLabel })
       };
       this.refreshUi();
 
@@ -532,10 +585,10 @@
         {
           onProgress: (progressMeta) => {
             if (stateVersion !== this.stateVersion || !this.aiThinking) return;
-            const depth = progressMeta?.depth ? ` depth ${progressMeta.depth}` : "";
+            const depthPart = progressMeta?.depth ? ` D${progressMeta.depth}` : "";
             this.engineStatus = {
               state: "thinking",
-              message: `${PLAYER_INFO[this.getTurnColorKey()].label} AI is searching${depth}.`
+              message: `${this.t("status.aiThinking", { player: currentTurnLabel })}${depthPart}`
             };
             this.refreshUi();
           }
@@ -544,7 +597,7 @@
         if (stateVersion !== this.stateVersion) return;
         const move = result?.move || null;
         if (!move?.uci) {
-          throw new Error("Engine did not return a legal move.");
+          throw new Error(this.t("engine.moveFailed"));
         }
         this.applyMoveInternal(move, "ai");
       }).catch((error) => {
@@ -557,7 +610,7 @@
       if (!this.currentState || this.isGameOver() || this.pendingPromotion || this.aiThinking) return;
 
       if (!this.canUseCoach()) {
-        this.toast("Coach hints are unavailable.");
+        this.toast(this.t("toast.coachUnavailable"));
         return;
       }
 
@@ -570,11 +623,11 @@
           return;
         }
         if (currentSession.loading) {
-          this.toast("Coach analysis is still running.");
+          this.toast(this.t("toast.coachRunning"));
           return;
         }
         if (currentSession.packet && currentSession.displayLevel >= maxStage) {
-          this.toast("The full hint is already open.");
+          this.toast(this.t("toast.hintAlreadyOpen"));
           return;
         }
       }
@@ -625,7 +678,7 @@
           this.lastHintSession.packet = error.partialHint;
         }
         this.lastHintSession.loading = false;
-        this.lastHintSession.error = error.message;
+        this.lastHintSession.error = this.getEngineMessage(error);
         this.handleEngineFailure(error, { fromHint: true });
         this.refreshUi();
       });
@@ -675,109 +728,119 @@
         this.coachSystemEnabled = false;
         this.engineStatus = {
           state: "unavailable",
-          message: error?.message || "Engine unavailable."
+          message: this.getEngineMessage(error) || this.t("engine.unavailable")
         };
         if (isAiState(this.whitePlayerType)) this.whitePlayerType = "HUMAN";
         if (isAiState(this.blackPlayerType)) this.blackPlayerType = "HUMAN";
       } else {
         this.engineStatus = {
           state: "idle",
-          message: error?.message || ""
+          message: this.getEngineMessage(error)
         };
       }
 
       if (options.fromHint) {
         this.toast(fatal
-          ? "Coach is unavailable. The board still works locally."
-          : "The coach could not finish this hint.");
+          ? `${this.t("engine.hintUnavailable")} ${this.t("engine.continueLocal")}`
+          : this.t("engine.hintFailed"));
       } else {
         const turnColor = this.getTurnColorKey();
         if (isAiState(this.getConfiguredPlayerType(turnColor))) {
           this.setConfiguredPlayerType(turnColor, "HUMAN");
         }
-        this.toast("Engine move failed. Continue locally on the same board.");
+        this.toast(this.t("toast.engineMoveFailed"));
       }
     }
 
     getClaimDrawLabel() {
-      if (!this.currentStatus) return "Claim draw";
-      if (this.currentStatus.canClaimThreefold) return "Threefold draw";
-      if (this.currentStatus.canClaimFiftyMove) return "Fifty-move draw";
-      return "Claim draw";
+      if (!this.currentStatus) return this.t("buttons.claimDraw");
+      if (this.currentStatus.canClaimThreefold) return this.t("buttons.claimThreefold");
+      if (this.currentStatus.canClaimFiftyMove) return this.t("buttons.claimFiftyMove");
+      return this.t("buttons.claimDraw");
     }
 
     getStatusBanner() {
       if (!this.currentState) {
-        return "Start a match to load the 8x8 board.";
+        return this.t("status.startBoard");
       }
 
       if (this.isGameOver()) {
-        return formatStatusReason(this.resultState) || "Game over";
+        return formatStatusReason(this.resultState, this.language) || this.t("status.gameOver");
       }
 
       if (this.pendingPromotion) {
-        return "Choose a promotion piece.";
+        return this.t("status.choosePromotion");
       }
 
       if (this.aiThinking) {
-        return `${getPlayerLabel(this.getTurnColorKey())} AI is thinking.`;
+        return this.t("status.aiThinking", { player: getPlayerLabel(this.getTurnColorKey(), this.language) });
       }
 
       if (this.lastHintSession?.loading) {
-        return "Coach analysis is running.";
+        return this.t("status.coachRunning");
       }
 
       if (this.currentStatus?.inCheck) {
-        return `${getPlayerLabel(this.getTurnColorKey())} to move in check`;
+        return this.t("status.inCheck", { player: getPlayerLabel(this.getTurnColorKey(), this.language) });
       }
 
       if (this.canClaimDraw()) {
-        return `${formatStatusReason(this.currentStatus)}. Use the draw button to finish the game.`;
+        return this.t("status.drawAvailable", {
+          reason: formatStatusReason(this.currentStatus, this.language)
+        });
       }
 
-      return `${getPlayerLabel(this.getTurnColorKey())} to move`;
+      return this.t("status.toMove", { player: getPlayerLabel(this.getTurnColorKey(), this.language) });
     }
 
     getBoardNote() {
-      if (!this.currentState) return "Start a match to open the board.";
-      if (this.pendingPromotion) return "Pick the piece for promotion.";
-      if (this.isGameOver()) return "You can restart the game or return to the menu.";
-      if (this.aiThinking) return "The engine is searching for the reply.";
-      if (this.currentStatus?.inCheck) return "Only legal check escapes are available.";
-      if (!this.isHumanTurn()) return "This side is controlled by the engine.";
-      return "Select one of your pieces to see its legal moves.";
+      if (!this.currentState) return this.t("board.note.startMatch");
+      if (this.pendingPromotion) return this.t("board.note.promotion");
+      if (this.isGameOver()) return this.t("board.note.gameOver");
+      if (this.aiThinking) return this.t("board.note.aiThinking");
+      if (this.currentStatus?.inCheck) return this.t("board.note.checkOnly");
+      if (!this.isHumanTurn()) return this.t("board.note.engineControlled");
+      return this.t("board.note.selectPiece");
     }
 
     getInfoPanelContent() {
       if (!this.currentState) {
         return {
-          title: "Board info",
-          paragraphs: ["Choose a preset or open custom setup to start a match."]
+          title: this.t("panel.boardInfo"),
+          paragraphs: [this.t("info.choosePreset")]
         };
       }
 
       const paragraphs = [
-        `Turn: ${getPlayerLabel(this.getTurnColorKey())}`,
-        `Last move: ${this.lastMove ? this.lastMove.san : "-"}`,
-        `Status: ${this.currentStatus?.inCheck ? "Check" : "Normal"}`
+        this.t("info.turn", { player: getPlayerLabel(this.getTurnColorKey(), this.language) }),
+        this.t("info.lastMove", { move: this.lastMove ? this.lastMove.san : "-" }),
+        this.t("info.status", {
+          status: this.currentStatus?.inCheck ? this.t("info.statusCheck") : this.t("info.statusNormal")
+        })
       ];
 
       if (this.engineStatus.message) {
-        paragraphs.push(`Engine: ${this.engineStatus.message}`);
+        paragraphs.push(this.t("info.engine", { message: this.engineStatus.message }));
       }
 
       if (this.lastHintSession?.packet) {
-        paragraphs.push(`Coach: ${this.lastHintSession.loading ? "Analyzing" : "Ready"}`);
+        paragraphs.push(this.t("info.coach", {
+          status: this.lastHintSession.loading ? this.t("info.coachAnalyzing") : this.t("info.coachReady")
+        }));
       }
 
       if (this.canClaimDraw()) {
-        paragraphs.push(`Draw: ${formatStatusReason(this.currentStatus)}`);
+        paragraphs.push(this.t("info.draw", {
+          reason: formatStatusReason(this.currentStatus, this.language)
+        }));
       } else if (this.isGameOver()) {
-        paragraphs.push(`Result: ${formatStatusReason(this.resultState) || "Game over"}`);
+        paragraphs.push(this.t("info.result", {
+          reason: formatStatusReason(this.resultState, this.language) || this.t("status.gameOver")
+        }));
       }
 
       return {
-        title: "Board info",
+        title: this.t("panel.boardInfo"),
         paragraphs
       };
     }
@@ -788,35 +851,37 @@
       if (this.resultState.result === "1-0" || this.resultState.result === "0-1") {
         const winner = this.resultState.result === "1-0" ? "white" : "black";
         return {
-          title: formatStatusReason(this.resultState) || "Game over",
-          text: `${getPlayerLabel(winner)} wins`
+          title: formatStatusReason(this.resultState, this.language) || this.t("result.gameOver"),
+          text: winner === "white" ? this.t("result.whiteWins") : this.t("result.blackWins")
         };
       }
 
       return {
-        title: formatStatusReason(this.resultState) || "Draw",
-        text: "This game ended in a draw."
+        title: formatStatusReason(this.resultState, this.language) || this.t("result.gameOver"),
+        text: this.t("result.draw")
       };
     }
 
     getHintButtonLabel() {
-      if (!this.canUseCoach()) return "Coach off";
-      if (this.lastHintSession?.loading) return "Coach...";
+      if (!this.canUseCoach()) return this.t("buttons.coachOff");
+      if (this.lastHintSession?.loading) return this.t("buttons.coachLoading");
       if (this.lastHintSession?.packet) {
         const current = this.lastHintSession.displayLevel || 1;
         const maxStage = this.lastHintSession.packet.availableStage || 1;
-        if (current < maxStage) return `Reveal ${current + 1}/${maxStage}`;
-        return "Hint open";
+        if (current < maxStage) {
+          return this.t("buttons.revealStage", { current: current + 1, max: maxStage });
+        }
+        return this.t("buttons.hintOpen");
       }
-      return "Coach hint";
+      return this.t("buttons.coachHint");
     }
 
     getEngineBadgeLabel() {
-      if (!this.currentState) return "Idle";
-      if (this.aiThinking) return "AI thinking";
-      if (this.lastHintSession?.loading) return "Coach";
-      if (!this.canUseAi() && !this.canUseCoach()) return "Offline";
-      return "Ready";
+      if (!this.currentState) return this.t("engine.idle");
+      if (this.aiThinking) return this.t("engine.aiThinkingBadge");
+      if (this.lastHintSession?.loading) return this.t("engine.coachBadge");
+      if (!this.canUseAi() && !this.canUseCoach()) return this.t("engine.offline");
+      return this.t("engine.ready");
     }
   }
 

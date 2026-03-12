@@ -4,64 +4,71 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Forest Chess</title>
-  <link rel="stylesheet" href="css/style.css?v=20260312_151100" />
+  <link rel="stylesheet" href="css/style.css?v=20260312_160900" />
 </head>
 <body>
   <div id="start-screen" class="screen">
     <div class="start-shell">
       <div class="hero-card">
-        <div class="hero-kicker">Family Chess Coach</div>
-        <h1 class="hero-title">Forest Chess</h1>
-        <p class="hero-text">
+        <div class="hero-kicker" data-i18n="hero.kicker">Family Chess Coach</div>
+        <h1 class="hero-title" data-i18n="document.title">Forest Chess</h1>
+        <p class="hero-text" data-i18n="hero.text">
           Animal-themed classical chess for families.
           Phase 3 connects real Stockfish move search, playable AI levels, and staged coach hints.
         </p>
-        <div class="hero-note">
+        <div class="hero-note" data-i18n="hero.note">
           The rules stay pure chess. Animals are labels only. AI seats and coach hints now run through the shared worker pipeline.
+        </div>
+        <div class="hero-language">
+          <div class="hero-language-head">
+            <div class="hero-language-title" data-i18n="language.title">Language</div>
+            <div class="hero-language-desc" data-i18n="language.desc">Choose the menu language before starting a game.</div>
+          </div>
+          <div id="language-switcher" class="language-switch"></div>
         </div>
       </div>
 
       <div id="menu-main" class="menu-card">
         <div class="section-head">
-          <div class="section-kicker">Quick Start</div>
-          <div class="section-title">Fast presets</div>
+          <div class="section-kicker" data-i18n="start.quickStartKicker">Quick Start</div>
+          <div class="section-title" data-i18n="start.quickStartTitle">Fast presets</div>
         </div>
         <div id="quick-start-list" class="preset-grid"></div>
 
         <div class="section-head top-gap">
-          <div class="section-kicker">Custom Setup</div>
-          <div class="section-title">White / Black setup</div>
+          <div class="section-kicker" data-i18n="start.customSetupKicker">Custom Setup</div>
+          <div class="section-title" data-i18n="start.customSetupTitle">White / Black setup</div>
         </div>
         <div class="setup-summary-card">
           <div id="setup-summary" class="setup-summary"></div>
-          <button class="action-btn primary" onclick="ui.showSetup()">Open custom setup</button>
+          <button id="btn-open-setup" class="action-btn primary" onclick="ui.showSetup()" data-i18n="start.openCustomSetup">Open custom setup</button>
         </div>
       </div>
 
       <div id="menu-setup" class="menu-card hidden">
         <div class="section-head">
-          <div class="section-kicker">Setup</div>
-          <div class="section-title">White / Black seats</div>
+          <div class="section-kicker" data-i18n="setup.kicker">Setup</div>
+          <div class="section-title" data-i18n="setup.title">White / Black seats</div>
         </div>
 
         <div id="setup-player-list" class="setup-list"></div>
 
         <div class="section-head top-gap">
-          <div class="section-kicker">Display</div>
-          <div class="section-title">Board options</div>
+          <div class="section-kicker" data-i18n="setup.displayKicker">Display</div>
+          <div class="section-title" data-i18n="setup.displayTitle">Board options</div>
         </div>
         <div id="setup-option-list" class="setup-list"></div>
 
         <div class="setup-help">
-          <div class="setup-help-title">Phase 3 notes</div>
-          <div class="setup-help-body">
+          <div class="setup-help-title" data-i18n="setup.helpTitle">Phase 3 notes</div>
+          <div class="setup-help-body" data-i18n="setup.helpBody">
             AI-1 to AI-7 are now live through the single worker entry point. Coach hints use a stronger analysis profile and reveal direction, candidate piece, then exact move.
           </div>
         </div>
 
         <div class="setup-actions">
           <button id="btn-start-match" class="action-btn primary" onclick="game.startFromSetup()">Start match</button>
-          <button class="action-btn secondary" onclick="ui.hideSetup()">Back</button>
+          <button id="btn-setup-back" class="action-btn secondary" onclick="ui.hideSetup()" data-i18n="buttons.back">Back</button>
         </div>
       </div>
     </div>
@@ -71,28 +78,28 @@
     <div class="game-shell">
       <header class="game-topbar">
         <div class="topbar-title-block">
-          <div class="topbar-title">Forest Chess Board</div>
+          <div class="topbar-title" data-i18n="topbar.title">Forest Chess Board</div>
           <div id="status-line" class="topbar-status">Board ready.</div>
         </div>
         <div class="topbar-actions">
           <div id="engine-chip" class="status-chip">Ready</div>
-          <button id="btn-rotate-board" class="mini-btn" onclick="game.toggleBoardOrientation()">Flip board</button>
-          <button id="btn-undo-move" class="mini-btn" onclick="game.undoMove()">Undo</button>
+          <button id="btn-rotate-board" class="mini-btn" onclick="game.toggleBoardOrientation()" data-i18n="buttons.flipBoard">Flip board</button>
+          <button id="btn-undo-move" class="mini-btn" onclick="game.undoMove()" data-i18n="buttons.undo">Undo</button>
           <button id="btn-claim-draw" class="mini-btn" onclick="game.claimDraw()">Claim draw</button>
           <button id="btn-hint" class="mini-btn ghost" onclick="game.requestHint()">Coach hint</button>
-          <button id="btn-restart" class="mini-btn" onclick="game.restart()">Restart</button>
-          <button id="btn-menu" class="mini-btn ghost" onclick="game.toMenu()">Menu</button>
+          <button id="btn-restart" class="mini-btn" onclick="game.restart()" data-i18n="buttons.restart">Restart</button>
+          <button id="btn-menu" class="mini-btn ghost" onclick="game.toMenu()" data-i18n="buttons.menu">Menu</button>
         </div>
       </header>
 
       <div class="game-grid">
         <aside class="sidebar-panel">
           <div class="panel-card">
-            <div class="panel-title">Players</div>
+            <div class="panel-title" data-i18n="panel.players">Players</div>
             <div id="player-panel-list" class="player-panel-list"></div>
           </div>
           <div class="panel-card">
-            <div class="panel-title">Animal legend</div>
+            <div class="panel-title" data-i18n="panel.animalLegend">Animal legend</div>
             <div id="theme-legend" class="theme-legend"></div>
           </div>
         </aside>
@@ -100,7 +107,7 @@
         <main class="board-panel">
           <div class="board-panel-head">
             <div>
-              <div class="board-title">8x8 board</div>
+              <div class="board-title" data-i18n="board.title">8x8 board</div>
               <div id="board-note" class="board-note">Select a piece to see its legal moves.</div>
             </div>
             <div class="status-chip-row">
@@ -115,26 +122,26 @@
 
         <aside class="sidebar-panel">
           <div class="panel-card">
-            <div class="panel-title">Board info</div>
+            <div class="panel-title" data-i18n="panel.boardInfo">Board info</div>
             <div id="info-panel" class="info-panel"></div>
           </div>
           <div class="panel-card">
-            <div class="panel-title">Coach panel</div>
+            <div class="panel-title" data-i18n="panel.coachPanel">Coach panel</div>
             <div id="hint-panel" class="hint-panel"></div>
           </div>
           <div class="panel-card">
-            <div class="panel-title">Captured pieces</div>
+            <div class="panel-title" data-i18n="panel.capturedPieces">Captured pieces</div>
             <div class="capture-block">
-              <div class="capture-title">Captured from White</div>
+              <div class="capture-title" data-i18n="panel.capturedFromWhite">Captured from White</div>
               <div id="captured-white" class="capture-list"></div>
             </div>
             <div class="capture-block">
-              <div class="capture-title">Captured from Black</div>
+              <div class="capture-title" data-i18n="panel.capturedFromBlack">Captured from Black</div>
               <div id="captured-black" class="capture-list"></div>
             </div>
           </div>
           <div class="panel-card move-panel">
-            <div class="panel-title">Moves</div>
+            <div class="panel-title" data-i18n="panel.moves">Moves</div>
             <div id="move-list" class="move-list"></div>
           </div>
         </aside>
@@ -144,11 +151,11 @@
 
   <div id="promotion-modal" class="overlay hidden">
     <div class="overlay-card">
-      <div class="overlay-title">Choose promotion</div>
-      <div class="overlay-text">Your pawn reached the last rank. Pick the piece to promote to.</div>
+      <div id="promotion-title" class="overlay-title" data-i18n="promotion.title">Choose promotion</div>
+      <div id="promotion-text" class="overlay-text" data-i18n="promotion.text">Your pawn reached the last rank. Pick the piece to promote to.</div>
       <div id="promotion-options" class="promotion-options"></div>
       <div class="overlay-actions">
-        <button class="action-btn secondary" onclick="game.cancelPromotion()">Cancel</button>
+        <button class="action-btn secondary" onclick="game.cancelPromotion()" data-i18n="buttons.cancel">Cancel</button>
       </div>
     </div>
   </div>
@@ -158,24 +165,25 @@
       <div id="result-title" class="overlay-title">Game over</div>
       <div id="result-text" class="overlay-text">The result is being prepared.</div>
       <div class="overlay-actions">
-        <button class="action-btn primary" onclick="game.restart()">Restart</button>
-        <button class="action-btn secondary" onclick="game.toMenu()">Menu</button>
+        <button class="action-btn primary" onclick="game.restart()" data-i18n="buttons.restart">Restart</button>
+        <button class="action-btn secondary" onclick="game.toMenu()" data-i18n="buttons.menu">Menu</button>
       </div>
     </div>
   </div>
 
   <div id="toast" class="toast">Notice</div>
 
-  <script src="shared/constants.js?v=20260312_151100"></script>
-  <script src="shared/utils.js?v=20260312_151100"></script>
-  <script src="js/chess/chess-state.js?v=20260312_151100"></script>
-  <script src="js/chess/fen.js?v=20260312_151100"></script>
-  <script src="js/chess/move-generator.js?v=20260312_151100"></script>
-  <script src="js/chess/san.js?v=20260312_151100"></script>
-  <script src="js/chess/rules.js?v=20260312_151100"></script>
-  <script src="js/ai-bridge.js?v=20260312_151100"></script>
-  <script src="js/game.js?v=20260312_151100"></script>
-  <script src="js/ui.js?v=20260312_151100"></script>
-  <script src="js/app.js?v=20260312_151100"></script>
+  <script src="shared/i18n.js?v=20260312_160900"></script>
+  <script src="shared/constants.js?v=20260312_160900"></script>
+  <script src="shared/utils.js?v=20260312_160900"></script>
+  <script src="js/chess/chess-state.js?v=20260312_160900"></script>
+  <script src="js/chess/fen.js?v=20260312_160900"></script>
+  <script src="js/chess/move-generator.js?v=20260312_160900"></script>
+  <script src="js/chess/san.js?v=20260312_160900"></script>
+  <script src="js/chess/rules.js?v=20260312_160900"></script>
+  <script src="js/ai-bridge.js?v=20260312_160900"></script>
+  <script src="js/game.js?v=20260312_160900"></script>
+  <script src="js/ui.js?v=20260312_160900"></script>
+  <script src="js/app.js?v=20260312_160900"></script>
 </body>
 </html>

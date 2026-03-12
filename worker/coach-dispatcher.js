@@ -3,7 +3,10 @@
   let ChessStateRef = null;
 
   if (typeof module !== "undefined" && module.exports) {
-    constants = require("../shared/constants.js");
+    constants = {
+      ...require("../shared/i18n.js"),
+      ...require("../shared/constants.js")
+    };
     ChessStateRef = require("../js/chess/chess-state.js");
   } else {
     constants = root;
@@ -23,15 +26,35 @@
   }
 
   const PIECE_THEME = constants.PIECE_THEME || {};
+  const DEFAULT_LANGUAGE = constants.DEFAULT_LANGUAGE || "ko";
+  const translateUi = constants.translateUi || ((language, key) => key);
+
+  function getLanguage(gameStateOrLanguage) {
+    if (typeof gameStateOrLanguage === "string") return gameStateOrLanguage;
+    return gameStateOrLanguage?.language || DEFAULT_LANGUAGE;
+  }
+
+  function t(gameStateOrLanguage, key, params = {}) {
+    return translateUi(getLanguage(gameStateOrLanguage), key, params);
+  }
+
+  function localize(value, language = DEFAULT_LANGUAGE) {
+    if (value === undefined || value === null) return "";
+    if (typeof value === "string") return value;
+    if (typeof value === "object") {
+      return value[language] ?? value[DEFAULT_LANGUAGE] ?? value.en ?? Object.values(value)[0] ?? "";
+    }
+    return String(value);
+  }
 
   function getPieceTheme(pieceType) {
     return PIECE_THEME[String(pieceType || "").toLowerCase()] || null;
   }
 
-  function getPieceLabel(pieceType) {
+  function getPieceLabel(pieceType, language) {
     const theme = getPieceTheme(pieceType);
-    if (!theme) return "piece";
-    return `${theme.animal} (${theme.chess})`;
+    if (!theme) return language === "ko" ? "말" : "piece";
+    return `${localize(theme.animal, language)} (${localize(theme.chess, language)})`;
   }
 
   function getMoveFromAnalysis(fen, uci) {
@@ -53,44 +76,44 @@
     return { state, legalMoves, inCheck };
   }
 
-  function getPlanTemplate(context, move) {
+  function getPlanTemplate(context, move, language) {
     if (context.inCheck) {
       return {
-        direction: "Get out of check before looking for anything ambitious.",
-        reason: "The king is under attack, so only check escapes are legal.",
-        threat: "Ignoring the check loses immediately."
+        direction: t(language, "coach.plan.check.direction"),
+        reason: t(language, "coach.plan.check.reason"),
+        threat: t(language, "coach.plan.check.threat")
       };
     }
 
     if (!move) {
       return {
-        direction: "Look for the safest active move in the position.",
-        reason: "The engine is still building a deeper answer.",
-        threat: "Watch for loose pieces and king safety first."
+        direction: t(language, "coach.plan.generic.direction"),
+        reason: t(language, "coach.partialSetup"),
+        threat: t(language, "coach.plan.generic.threat")
       };
     }
 
     if (move.flags.castle) {
       return {
-        direction: "Secure the king and connect the rooks.",
-        reason: "Castling improves king safety and activates a rook at the same time.",
-        threat: "Leaving the king in the center invites tactics."
+        direction: t(language, "coach.plan.castle.direction"),
+        reason: t(language, "coach.plan.castle.reason"),
+        threat: t(language, "coach.plan.castle.threat")
       };
     }
 
     if (move.promotion) {
       return {
-        direction: "Push the pawn through and convert it immediately.",
-        reason: "Promotion changes the balance of the game right away.",
-        threat: "Delaying the promotion can waste the biggest advantage on the board."
+        direction: t(language, "coach.plan.promotion.direction"),
+        reason: t(language, "coach.plan.promotion.reason"),
+        threat: t(language, "coach.plan.promotion.threat")
       };
     }
 
     if (move.flags.capture || move.flags.enPassant) {
       return {
-        direction: "Take the clean gain while it is available.",
-        reason: "The move wins material or removes a dangerous piece without breaking the position.",
-        threat: "If you skip it, the opponent may save the target."
+        direction: t(language, "coach.plan.capture.direction"),
+        reason: t(language, "coach.plan.capture.reason"),
+        threat: t(language, "coach.plan.capture.threat")
       };
     }
 
@@ -98,33 +121,33 @@
       const toSquare = ChessState.indexToSquare(move.to);
       if (toSquare === "e4" || toSquare === "d4" || toSquare === "e5" || toSquare === "d5") {
         return {
-          direction: "Claim the center with a useful pawn move.",
-          reason: "Central pawns create room for the rest of the pieces.",
-          threat: "Ignoring the center makes development harder later."
+          direction: t(language, "coach.plan.centerPawn.direction"),
+          reason: t(language, "coach.plan.centerPawn.reason"),
+          threat: t(language, "coach.plan.centerPawn.threat")
         };
       }
     }
 
     if (move.piece && ChessState.pieceType(move.piece) === "n") {
       return {
-        direction: "Develop a knight toward active central squares.",
-        reason: "Knights become much stronger when they help control the center.",
-        threat: "Slow development gives the opponent easier attacks."
+        direction: t(language, "coach.plan.knight.direction"),
+        reason: t(language, "coach.plan.knight.reason"),
+        threat: t(language, "coach.plan.knight.threat")
       };
     }
 
     if (move.piece && ChessState.pieceType(move.piece) === "b") {
       return {
-        direction: "Improve the bishop and increase long-range pressure.",
-        reason: "A developed bishop supports king safety and future tactics.",
-        threat: "Passive bishops can leave key diagonals uncovered."
+        direction: t(language, "coach.plan.bishop.direction"),
+        reason: t(language, "coach.plan.bishop.reason"),
+        threat: t(language, "coach.plan.bishop.threat")
       };
     }
 
     return {
-      direction: "Improve the least active piece without creating a weakness.",
-      reason: "The best move makes the whole position healthier.",
-      threat: "Loose or slow moves can give the opponent easy targets."
+      direction: t(language, "coach.plan.generic.direction"),
+      reason: t(language, "coach.plan.generic.reason"),
+      threat: t(language, "coach.plan.generic.threat")
     };
   }
 
@@ -141,15 +164,15 @@
     return "low";
   }
 
-  function buildAlternatives(fen, analysis) {
+  function buildAlternatives(fen, analysis, language) {
     const entries = Array.isArray(analysis.multipv) ? analysis.multipv.slice(1, 3) : [];
     const primaryCp = analysis.scoreCp || 0;
     return entries.map((entry) => {
       const move = getMoveFromAnalysis(fen, entry.pv?.[0] || entry.bestmove || entry.move);
       const gap = Math.abs(primaryCp - (entry.scoreCp || 0));
-      let note = "Playable";
-      if (gap <= 20) note = "Also good";
-      if (gap > 80) note = "Less safe";
+      let note = t(language, "coach.alt.playable");
+      if (gap <= 20) note = t(language, "coach.alt.alsoGood");
+      if (gap > 80) note = t(language, "coach.alt.lessSafe");
       return {
         moveUci: move?.uci || null,
         moveSan: move ? getMoveSan(fen, move) : null,
@@ -160,10 +183,16 @@
     }).filter((entry) => entry.moveUci);
   }
 
-  function createStage(level, content) {
+  function createStage(level, content, language) {
+    const labelKey = level === 1
+      ? "coach.stage.direction"
+      : level === 2
+        ? "coach.stage.candidate"
+        : "coach.stage.exact";
+
     return {
       level,
-      label: level === 1 ? "Direction" : level === 2 ? "Candidate" : "Exact move",
+      label: t(language, labelKey),
       title: content.title,
       summary: content.summary,
       leadText: content.leadText,
@@ -174,66 +203,73 @@
 
   function buildHintPacket(gameState, analysis, options = {}) {
     const fen = gameState.fen;
+    const language = getLanguage(gameState);
     const context = getPositionContext(fen);
     const move = getMoveFromAnalysis(fen, analysis.bestmove);
     const moveSan = move ? getMoveSan(fen, move) : null;
-    const template = getPlanTemplate(context, move);
+    const template = getPlanTemplate(context, move, language);
     const pieceType = move?.piece ? ChessState.pieceType(move.piece) : null;
-    const pieceLabel = pieceType ? getPieceLabel(pieceType) : "piece";
+    const pieceLabel = pieceType ? getPieceLabel(pieceType, language) : (language === "ko" ? "말" : "piece");
     const fromSquare = move ? ChessState.indexToSquare(move.from) : null;
     const toSquare = move ? ChessState.indexToSquare(move.to) : null;
     const availableStage = Math.max(1, Math.min(3, options.availableStage || 3));
 
     const stages = [
       createStage(1, {
-        title: "Direction",
+        title: t(language, "coach.stage.direction"),
         summary: template.direction,
         leadText: template.direction,
         reason: template.reason,
         steps: [
-          context.inCheck ? "Only check escapes are legal now." : "Start with king safety and loose pieces.",
-          "Use the next stage if you want a piece recommendation."
+          context.inCheck ? t(language, "coach.step.escapeOnly") : t(language, "coach.step.safetyFirst"),
+          t(language, "coach.step.useNextStage")
         ]
-      })
+      }, language)
     ];
 
     if (availableStage >= 2) {
       stages.push(createStage(2, {
-        title: "Candidate piece",
-        summary: move ? `Start by checking ${pieceLabel}.` : "Start with the safest active piece.",
-        leadText: move ? `${pieceLabel} is the first piece to inspect.` : "Check the safest active piece first.",
+        title: t(language, "coach.stage.candidate"),
+        summary: move ? t(language, "coach.summary.candidatePiece", { piece: pieceLabel }) : t(language, "coach.plan.generic.direction"),
+        leadText: move ? t(language, "coach.lead.candidatePiece", { piece: pieceLabel }) : t(language, "coach.plan.generic.direction"),
         reason: move
-          ? `${pieceLabel} addresses the main problem without creating a new one.`
+          ? t(language, "coach.reason.candidatePiece", { piece: pieceLabel })
           : template.reason,
         steps: move
           ? [
-              `Find ${pieceLabel} on ${fromSquare}.`,
-              "Ask what it fixes: safety, center control, or defense."
+              t(language, "coach.step.findPiece", { piece: pieceLabel, from: fromSquare }),
+              t(language, "coach.step.askFix")
             ]
-          : ["Check king safety.", "Check loose pieces."]
-      }));
+          : [t(language, "coach.step.checkKingSafety"), t(language, "coach.step.checkLoosePieces")]
+      }, language));
     }
 
     if (availableStage >= 3) {
       stages.push(createStage(3, {
-        title: "Exact move",
-        summary: move ? `Play ${pieceLabel} to ${toSquare}.` : "The coach could not lock one move yet.",
-        leadText: move ? `${pieceLabel} to ${toSquare}${moveSan ? ` (${moveSan})` : ""}.` : "Keep the move safe and active.",
+        title: t(language, "coach.stage.exact"),
+        summary: move ? t(language, "coach.summary.exactMove", { piece: pieceLabel, to: toSquare }) : t(language, "coach.summary.noMoveYet"),
+        leadText: move
+          ? t(language, "coach.lead.exactMove", {
+              piece: pieceLabel,
+              to: toSquare,
+              sanPart: moveSan ? t(language, "coach.sanPart", { san: moveSan }) : ""
+            })
+          : t(language, "coach.lead.keepSafe"),
         reason: template.reason,
         steps: move
           ? [
-              `Move from ${fromSquare} to ${toSquare}.`,
+              t(language, "coach.step.movePiece", { from: fromSquare, to: toSquare }),
               move.flags.capture || move.flags.enPassant
-                ? "This removes a target while staying safe."
-                : "This improves the position without adding a new weakness."
+                ? t(language, "coach.step.captureSafe")
+                : t(language, "coach.step.improveSafe")
             ]
-          : ["Prefer safety first.", "Develop or defend before attacking."]
-      }));
+          : [t(language, "coach.step.preferSafety"), t(language, "coach.step.developBeforeAttack")]
+      }, language));
     }
 
     const activeStage = stages[stages.length - 1];
     return {
-      title: "Coach hint",
+      title: t(language, "coach.title"),
       summary: activeStage.summary,
       leadText: activeStage.leadText,
       reason: activeStage.reason,
@@ -246,7 +282,7 @@
       moveSan,
       pieceType,
       pieceLabel,
-      alternatives: buildAlternatives(fen, analysis),
+      alternatives: buildAlternatives(fen, analysis, language),
       confidence: classifyConfidence(analysis),
       partial: !!options.partial,
       searchPhase: options.searchPhase || "final",
@@ -260,28 +296,29 @@
   }
 
   function createImmediateHint(gameState) {
+    const language = getLanguage(gameState);
     const context = getPositionContext(gameState.fen);
-    const template = getPlanTemplate(context, null);
+    const template = getPlanTemplate(context, null, language);
     return {
-      title: "Coach hint",
+      title: t(language, "coach.title"),
       summary: template.direction,
       leadText: template.direction,
       reason: template.reason,
       steps: [
-        context.inCheck ? "Find a legal check escape first." : "Check king safety before attacking.",
-        "Use the hint button again when the engine finishes."
+        context.inCheck ? t(language, "coach.step.checkEscapeFirst") : t(language, "coach.step.checkKingSafety"),
+        t(language, "coach.step.analysisRunning")
       ],
       stages: [
         createStage(1, {
-          title: "Direction",
+          title: t(language, "coach.stage.direction"),
           summary: template.direction,
           leadText: template.direction,
           reason: template.reason,
           steps: [
-            context.inCheck ? "Only check escapes are legal now." : "Start with safety and loose pieces.",
-            "The engine is still searching."
+            context.inCheck ? t(language, "coach.step.escapeOnly") : t(language, "coach.step.safetyFirst"),
+            t(language, "coach.step.analysisRunning")
           ]
-        })
+        }, language)
       ],
       availableStage: 1,
       from: null,
@@ -294,7 +331,7 @@
       confidence: "medium",
       partial: true,
       searchPhase: "setup",
-      truncationNote: "Analysis is still running.",
+      truncationNote: t(language, "coach.partialSetup"),
       systemUnavailable: false,
       threatSummary: template.threat,
       evalCp: null,
@@ -304,6 +341,7 @@
   }
 
   function createProgressHint(gameState, infoSnapshot) {
+    const language = getLanguage(gameState);
     const uci = infoSnapshot?.bestmove || infoSnapshot?.pv?.[0] || null;
     if (!uci) return createImmediateHint(gameState);
     return buildHintPacket(gameState, {
@@ -316,25 +354,26 @@
       partial: true,
       searchPhase: "candidate",
       availableStage: 2,
-      truncationNote: "The engine is still checking deeper lines."
+      truncationNote: t(language, "coach.partialDeeper")
     });
   }
 
-  function createUnavailableHint(message) {
+  function createUnavailableHint(message, gameStateOrLanguage) {
+    const language = getLanguage(gameStateOrLanguage);
     return {
-      title: "Coach unavailable",
-      summary: "The engine could not finish the analysis.",
-      leadText: "The board is still playable, but coach hints are temporarily offline.",
-      reason: message || "Engine startup failed.",
-      steps: ["Keep playing locally.", "Retry the hint button after the worker resets."],
+      title: t(language, "coach.unavailableTitle"),
+      summary: t(language, "coach.unavailableSummary"),
+      leadText: t(language, "coach.unavailableLead"),
+      reason: message || t(language, "coach.unavailableReason"),
+      steps: [t(language, "coach.unavailableStep1"), t(language, "coach.unavailableStep2")],
       stages: [
         createStage(1, {
-          title: "Direction",
-          summary: "Coach is unavailable right now.",
-          leadText: "The board is still playable.",
-          reason: message || "Engine startup failed.",
-          steps: ["Retry later.", "Continue the game without engine help."]
-        })
+          title: t(language, "coach.stage.direction"),
+          summary: t(language, "coach.unavailableDirection"),
+          leadText: t(language, "coach.unavailablePlayable"),
+          reason: message || t(language, "coach.unavailableReason"),
+          steps: [t(language, "coach.unavailableRetry1"), t(language, "coach.unavailableRetry2")]
+        }, language)
       ],
       availableStage: 1,
       from: null,
