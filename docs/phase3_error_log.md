@@ -238,3 +238,29 @@
 
 - The center board column is now fixed to a stable desktop width instead of consuming all leftover space.
 - The board area should now look consistent across machines until the responsive breakpoint stacks the layout.
+
+---
+
+## 2026-03-12 15:24:00 - GitHub Pages Build Failed After Generated Snapshot Commits
+
+### Symptom
+
+- GitHub reported `pages build and deployment - main (c5181f6)` failure.
+- The deployed website stayed on an older successful build, so the online board did not match the latest source.
+
+### Root Cause
+
+- The repository had started tracking generated snapshot content under `legacy_code/` and many `docs/progress*.md` files.
+- That content is not needed for the website and increases the chance of Pages/Jekyll build problems.
+- Because the Pages build failed, deployment was skipped, which is why the online site stayed stale even though `git push` itself succeeded.
+
+### Fix
+
+- Stopped tracking `legacy_code/`.
+- Stopped tracking `docs/progress*.md`.
+- Added `.nojekyll` so Pages serves the repository as a plain static site instead of trying to process generated markdown with Jekyll.
+
+### Result
+
+- The next Pages deployment will be based only on the actual web app files and essential docs.
+- Online state and `main` branch state should converge again after the new build succeeds.
