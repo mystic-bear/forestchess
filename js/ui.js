@@ -56,12 +56,16 @@ const ui = {
       const button = document.createElement("button");
       button.className = `preset-card ${preset.enabled ? "enabled" : "disabled"}`;
       button.disabled = !preset.enabled;
+      const emojiRow = Array.isArray(preset.emojiRow)
+        ? preset.emojiRow.map((entry) => `<span class="preset-emoji">${entry}</span>`).join("")
+        : "";
       button.innerHTML = `
         <div class="preset-top">
           <div class="preset-title">${resolveLocalizedText(preset.label, game.language)}</div>
           <div class="preset-chip">${resolveLocalizedText(preset.subtitle, game.language)}</div>
         </div>
         <div class="preset-detail">${resolveLocalizedText(preset.detail, game.language)}</div>
+        <div class="preset-emoji-row">${emojiRow}</div>
       `;
       if (preset.enabled) {
         button.onclick = () => game.applyPreset(preset.key);
@@ -71,7 +75,7 @@ const ui = {
 
     summary.innerHTML = `
       <div class="setup-summary-title">${this.t("start.currentSetup")}</div>
-      <div class="setup-summary-body">${buildSetupSummary(game.setupPlayers, game.language)}</div>
+      <div class="setup-summary-body">${buildSetupSummary(game.setupPlayers, game.language, game.setupPlayerAnimals)}</div>
     `;
 
     if (resumeCard) {
@@ -105,19 +109,26 @@ const ui = {
     PLAYER_ORDER.forEach((colorKey) => {
       const player = PLAYER_INFO[colorKey];
       const state = game.setupPlayers[colorKey];
+      const animal = game.getPlayerAnimalInfo(colorKey);
       const row = document.createElement("div");
       row.className = "setup-row";
       row.innerHTML = `
         <div class="setup-main">
-          <div class="setup-icon ${colorKey}">${player.icon}</div>
+          <div class="setup-animal-badge ${colorKey}" title="${getPlayerAnimalLabel(animal?.key, game.language)}">${animal?.emoji || "🐻"}</div>
           <div>
             <div class="setup-title">${resolveLocalizedText(player.label, game.language)}</div>
-            <div class="setup-desc">${getSetupStateDescription(state, game.language)}</div>
+            <div class="setup-desc">${formatPlayerRoleWithAnimal(state, animal?.key, game.language)}</div>
+            <div class="setup-note">${getSetupStateDescription(state, game.language)}</div>
           </div>
         </div>
-        <button class="state-btn ${isAiState(state) ? "ai" : "human"}">${getSetupStateLabel(state, false, game.language)}</button>
+        <div class="setup-row-actions">
+          <button class="state-btn option animal-btn">${this.t("buttons.changeAnimal")}</button>
+          <button class="state-btn ${isAiState(state) ? "ai" : "human"}">${getSetupStateLabel(state, false, game.language)}</button>
+        </div>
       `;
-      row.querySelector("button").onclick = () => game.cycleSetupState(colorKey);
+      const buttons = row.querySelectorAll("button");
+      buttons[0].onclick = () => game.cyclePlayerAnimal(colorKey);
+      buttons[1].onclick = () => game.cycleSetupState(colorKey);
       playerList.appendChild(row);
     });
 
@@ -181,15 +192,19 @@ const ui = {
       const currentTurn = game.currentState && getPlayerColorKey(game.currentState.turn) === colorKey;
       const inCheck = game.currentStatus?.inCheck && currentTurn;
       const type = game.getConfiguredPlayerType(colorKey);
+      const animal = game.getPlayerAnimalInfo(colorKey);
 
       const card = document.createElement("div");
       card.className = `player-card ${currentTurn ? "active" : ""}`;
       card.style.borderColor = player.accent;
       card.innerHTML = `
         <div class="player-card-top">
-          <div>
-            <div class="player-name">${resolveLocalizedText(player.label, game.language)}</div>
-            <div class="player-sub">${getSetupStateLabel(type, true, game.language)}</div>
+          <div class="player-card-identity">
+            <div class="player-animal-badge ${colorKey}" title="${getPlayerAnimalLabel(animal?.key, game.language)}">${animal?.emoji || "🐻"}</div>
+            <div>
+              <div class="player-name">${resolveLocalizedText(player.label, game.language)}</div>
+              <div class="player-sub">${formatPlayerRoleWithAnimal(type, animal?.key, game.language)}</div>
+            </div>
           </div>
           <div class="player-badge ${colorKey}">${currentTurn ? this.t("player.toMove") : this.t("player.waiting")}</div>
         </div>

@@ -30,6 +30,7 @@
     DEFAULT_SETUP,
     QUICK_PRESETS,
     PLAYER_ORDER,
+    PLAYER_ANIMALS,
     SETUP_STATES,
     PIECE_LABEL_MODES,
     BOARD_ORIENTATION_OPTIONS,
@@ -38,6 +39,7 @@
     getAiLevelFromState,
     getPlayerColorKey,
     getPlayerLabel,
+    getPlayerAnimalInfo,
     cycleOptionKey,
     formatStatusReason,
     buildSetupSummary
@@ -57,6 +59,7 @@
       this.saveManager = options.saveManager || (typeof SaveManager === "function" ? new SaveManager() : null);
       this.language = this.loadLanguageSetting();
       this.setupPlayers = deepCopy(DEFAULT_SETUP);
+      this.setupPlayerAnimals = this.buildDefaultPlayerAnimals();
       this.whitePlayerType = DEFAULT_SETUP.white;
       this.blackPlayerType = DEFAULT_SETUP.black;
       this.pieceLabelMode = "both";
@@ -212,6 +215,57 @@
       return this.archiveGames;
     }
 
+    buildDefaultPlayerAnimals() {
+      const fallbackWhite = PLAYER_ANIMALS[0]?.key || "bear";
+      const fallbackBlack = PLAYER_ANIMALS[1]?.key || fallbackWhite;
+      return {
+        white: fallbackWhite,
+        black: fallbackBlack
+      };
+    }
+
+    getPlayerAnimalKey(colorKey) {
+      return this.setupPlayerAnimals?.[colorKey] || this.buildDefaultPlayerAnimals()[colorKey];
+    }
+
+    getPlayerAnimalInfo(colorKey) {
+      return getPlayerAnimalInfo(this.getPlayerAnimalKey(colorKey));
+    }
+
+    cyclePlayerAnimal(colorKey) {
+      const animals = Array.isArray(PLAYER_ANIMALS) ? PLAYER_ANIMALS : [];
+      if (!animals.length) return;
+      const currentKey = this.getPlayerAnimalKey(colorKey);
+      const index = animals.findIndex((entry) => entry.key === currentKey);
+      const nextIndex = index >= 0 ? (index + 1) % animals.length : 0;
+      this.setupPlayerAnimals[colorKey] = animals[nextIndex].key;
+      this.notifyUi("renderStart");
+      this.notifyUi("renderSetup");
+      this.refreshUi();
+    }
+
+    assignRandomPlayerAnimals() {
+      const animals = Array.isArray(PLAYER_ANIMALS) ? PLAYER_ANIMALS : [];
+      if (!animals.length) {
+        this.setupPlayerAnimals = this.buildDefaultPlayerAnimals();
+        return this.setupPlayerAnimals;
+      }
+
+      const whiteIndex = Math.floor(Math.random() * animals.length);
+      let blackIndex = Math.floor(Math.random() * animals.length);
+      if (animals.length > 1) {
+        while (blackIndex === whiteIndex) {
+          blackIndex = Math.floor(Math.random() * animals.length);
+        }
+      }
+
+      this.setupPlayerAnimals = {
+        white: animals[whiteIndex].key,
+        black: animals[blackIndex].key
+      };
+      return this.setupPlayerAnimals;
+    }
+
     getArchiveGames() {
       return this.archiveGames;
     }
@@ -237,7 +291,7 @@
       };
       return {
         savedAtLabel,
-        setupSummary: buildSetupSummary(setupPlayers, this.language),
+        setupSummary: buildSetupSummary(setupPlayers, this.language, snapshot.setupPlayerAnimals || null),
         lastMoveSan: snapshot.lastMove?.san || (snapshot.moveHistorySan?.length ? snapshot.moveHistorySan[snapshot.moveHistorySan.length - 1] : "-"),
         resultLine: snapshot.resultState?.terminal
           ? (formatStatusReason(snapshot.resultState, this.language) || this.t("result.gameOver"))
@@ -303,6 +357,7 @@
         engineStatus: this.engineStatus ? { ...this.engineStatus } : null,
         lastMove: this.lastMove ? { ...this.lastMove } : null,
         setupPlayers: { ...this.setupPlayers },
+        setupPlayerAnimals: { ...this.setupPlayerAnimals },
         modeKey: this.modeKey
       };
     }
@@ -358,7 +413,8 @@
             }
           : null,
         lastMove: this.lastMove ? { ...this.lastMove } : null,
-        setupPlayers: { ...this.setupPlayers }
+        setupPlayers: { ...this.setupPlayers },
+        setupPlayerAnimals: { ...this.setupPlayerAnimals }
       };
     }
 
@@ -470,6 +526,7 @@
       if (!preset) return;
       this.modeKey = preset.key;
       this.setupPlayers = deepCopy(preset.setup);
+      this.assignRandomPlayerAnimals();
       this.notifyUi("renderStart");
       this.notifyUi("renderSetup");
       this.startFromSetup();
@@ -541,6 +598,9 @@
         white: snapshot.whitePlayerType || "HUMAN",
         black: snapshot.blackPlayerType || "HUMAN"
       };
+      this.setupPlayerAnimals = snapshot.setupPlayerAnimals
+        ? { ...snapshot.setupPlayerAnimals }
+        : this.buildDefaultPlayerAnimals();
       this.whitePlayerType = snapshot.whitePlayerType || this.setupPlayers.white || "HUMAN";
       this.blackPlayerType = snapshot.blackPlayerType || this.setupPlayers.black || "HUMAN";
       this.pieceLabelMode = snapshot.pieceLabelMode || "both";

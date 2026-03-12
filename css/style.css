@@ -182,7 +182,7 @@ button {
 }
 
 .preset-grid {
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .preset-card,
@@ -197,6 +197,10 @@ button {
 .preset-card {
   padding: 18px;
   text-align: left;
+  min-height: 176px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
   transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
 }
 
@@ -239,9 +243,23 @@ button {
 }
 
 .preset-detail {
-  margin-top: 12px;
   color: var(--text-muted);
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.preset-emoji-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 24px;
+}
+
+.preset-emoji {
+  font-size: 1.15rem;
 }
 
 .setup-summary-card {
@@ -292,9 +310,12 @@ button {
   display: flex;
   gap: 14px;
   align-items: center;
+  min-width: 0;
 }
 
-.setup-icon {
+.setup-icon,
+.setup-animal-badge,
+.player-animal-badge {
   width: 48px;
   height: 48px;
   border-radius: 16px;
@@ -303,6 +324,12 @@ button {
   font-size: 1.35rem;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid var(--panel-line);
+}
+
+.setup-animal-badge,
+.player-animal-badge {
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .setup-icon.white {
@@ -317,15 +344,43 @@ button {
   background: linear-gradient(180deg, #f1f7df, #dfe9c5);
 }
 
+.setup-animal-badge.white,
+.player-animal-badge.white {
+  background: linear-gradient(180deg, #fff5df, #fde6c4);
+}
+
+.setup-animal-badge.black,
+.player-animal-badge.black {
+  background: linear-gradient(180deg, #d7e2ff, #bbcff6);
+}
+
 .setup-title {
   font-size: 1rem;
 }
 
 .setup-desc {
   margin-top: 4px;
-  color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   line-height: 1.35;
+}
+
+.setup-note {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.setup-row-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.state-btn.animal-btn {
+  min-width: 128px;
 }
 
 .state-btn,
@@ -493,6 +548,20 @@ button {
   justify-content: space-between;
   gap: 12px;
   align-items: center;
+}
+
+.player-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.player-animal-badge {
+  width: 52px;
+  height: 52px;
+  font-size: 1.5rem;
+  flex: 0 0 auto;
 }
 
 .player-name {
@@ -1143,6 +1212,10 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .preset-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .board-panel-head,
   .game-topbar {
     flex-direction: column;
@@ -1168,6 +1241,16 @@ button {
   .setup-row {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .preset-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .setup-row-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 
   .state-btn,

@@ -14,6 +14,12 @@ Track archive, post-game analysis, review cards, play-from-here, and legacy-isol
 
 ## Resolved issues
 
+- 2026-03-12 23:45
+  - Symptom: The start screen presets still felt visually sparse, and the player setup / in-game side panels did not carry any player-facing animal identity beyond the piece theme.
+  - Cause: The UI still relied on a five-card auto-fit preset grid and only stored seat state (`HUMAN`, `AI-x`) without a separate player-animal profile layer.
+  - Fix: Added a dedicated 18-entry `PLAYER_ANIMALS` pool, randomized animals for recommended presets, added manual animal cycling for custom setup, and persisted `setupPlayerAnimals` through latest-save and archive flows. The start screen preset grid was also reshaped into a denser six-card layout with per-card emoji rows.
+  - Result: The menu and player panels now look closer to a family animal-chess app, and player animal choices survive save/resume/archive paths.
+
 - 2026-03-12 23:17
   - Symptom: The first final ladder draft would have weakened `AI-1` too much and still left several public labels behind the intended final 800-2000 ladder.
   - Cause: The earlier rebalance draft optimized for mid and top separation first, which made the entry tier feel too soft and left the UI labels out of sync with the intended final values.

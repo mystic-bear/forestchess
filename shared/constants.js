@@ -75,7 +75,7 @@
     4: {
       short: "AI-4",
       label: { ko: "AI-4 / 1300", en: "AI-4 / 1300" },
-      desc: { ko: "클럽", en: "Club" },
+      desc: { ko: "초중급", en: "Club" },
       engine: {
         mode: "weak_multipv",
         movetime: 125,
@@ -90,7 +90,7 @@
     5: {
       short: "AI-5",
       label: { ko: "AI-5 / 1500", en: "AI-5 / 1500" },
-      desc: { ko: "안정", en: "Solid" },
+      desc: { ko: "중급", en: "Solid" },
       engine: {
         mode: "elo_limit",
         movetime: 280,
@@ -106,7 +106,7 @@
     6: {
       short: "AI-6",
       label: { ko: "AI-6 / 1750", en: "AI-6 / 1750" },
-      desc: { ko: "강함", en: "Strong" },
+      desc: { ko: "상급", en: "Strong" },
       engine: {
         mode: "elo_limit",
         movetime: 520,
@@ -167,6 +167,7 @@
         ko: "두 사람이 한 보드를 함께 쓰는 정통 체스입니다.",
         en: "Two people share one board with the full chess rules."
       },
+      emojiRow: ["🐶", "🐱"],
       setup: { white: "HUMAN", black: "HUMAN" },
       enabled: true
     },
@@ -175,10 +176,23 @@
       label: { ko: "사람 vs AI-1", en: "Human vs AI-1" },
       subtitle: { ko: "입문 코치 대국", en: "Entry coach game" },
       detail: {
-        ko: "부담 적은 속도로 AI 응수를 보며 연습합니다.",
+        ko: "부담 적은 속도로 AI 수를 보며 연습합니다.",
         en: "Low-pressure practice with quick engine replies."
       },
+      emojiRow: ["🙂", "🐥"],
       setup: { white: "HUMAN", black: "AI-1" },
+      enabled: true
+    },
+    {
+      key: "ai-2",
+      label: { ko: "사람 vs AI-2", en: "Human vs AI-2" },
+      subtitle: { ko: "가벼운 연습", en: "Gentle practice" },
+      detail: {
+        ko: "입문 다음 단계로, 쉬운 대응을 익히기 좋은 속도입니다.",
+        en: "A light practice step after entry play."
+      },
+      emojiRow: ["🙂", "🐰"],
+      setup: { white: "HUMAN", black: "AI-2" },
       enabled: true
     },
     {
@@ -189,6 +203,7 @@
         ko: "가족 대국과 코치 힌트에 균형이 좋은 추천 난도입니다.",
         en: "Balanced pacing for family play and coach hints."
       },
+      emojiRow: ["🙂", "🐶"],
       setup: { white: "HUMAN", black: "AI-3" },
       enabled: true
     },
@@ -200,6 +215,7 @@
         ko: "전술과 수비가 더 정돈된 중급 이상 난도입니다.",
         en: "Stronger tactics and cleaner defense."
       },
+      emojiRow: ["🙂", "🦊"],
       setup: { white: "HUMAN", black: "AI-5" },
       enabled: true
     },
@@ -208,12 +224,34 @@
       label: { ko: "사람 vs AI-7", en: "Human vs AI-7" },
       subtitle: { ko: "챌린지 모드", en: "Challenge mode" },
       detail: {
-        ko: "현재 Phase 3 기준 최상 난도 프로필입니다.",
-        en: "Highest Phase 3 challenge profile."
+        ko: "현재 기준 최상 난도에 가까운 도전용 프리셋입니다.",
+        en: "A challenge preset close to the current top difficulty."
       },
+      emojiRow: ["🙂", "🐯"],
       setup: { white: "HUMAN", black: "AI-7" },
       enabled: true
     }
+  ];
+
+  const PLAYER_ANIMALS = [
+    { key: "bear", emoji: "🐻", label: { ko: "곰", en: "Bear" } },
+    { key: "fox", emoji: "🦊", label: { ko: "여우", en: "Fox" } },
+    { key: "rabbit", emoji: "🐰", label: { ko: "토끼", en: "Rabbit" } },
+    { key: "cat", emoji: "🐱", label: { ko: "고양이", en: "Cat" } },
+    { key: "dog", emoji: "🐶", label: { ko: "강아지", en: "Dog" } },
+    { key: "tiger", emoji: "🐯", label: { ko: "호랑이", en: "Tiger" } },
+    { key: "lion", emoji: "🦁", label: { ko: "사자", en: "Lion" } },
+    { key: "panda", emoji: "🐼", label: { ko: "판다", en: "Panda" } },
+    { key: "koala", emoji: "🐨", label: { ko: "코알라", en: "Koala" } },
+    { key: "monkey", emoji: "🐵", label: { ko: "원숭이", en: "Monkey" } },
+    { key: "pig", emoji: "🐷", label: { ko: "돼지", en: "Pig" } },
+    { key: "cow", emoji: "🐮", label: { ko: "소", en: "Cow" } },
+    { key: "mouse", emoji: "🐭", label: { ko: "쥐", en: "Mouse" } },
+    { key: "hamster", emoji: "🐹", label: { ko: "햄스터", en: "Hamster" } },
+    { key: "chick", emoji: "🐥", label: { ko: "병아리", en: "Chick" } },
+    { key: "owl", emoji: "🦉", label: { ko: "부엉이", en: "Owl" } },
+    { key: "penguin", emoji: "🐧", label: { ko: "펭귄", en: "Penguin" } },
+    { key: "duck", emoji: "🦆", label: { ko: "오리", en: "Duck" } }
   ];
 
   const PIECE_THEME = {
@@ -258,6 +296,7 @@
     REVIEW_PROFILE,
     ENGINE_ASSET_CANDIDATES,
     QUICK_PRESETS,
+    PLAYER_ANIMALS,
     PIECE_THEME,
     PIECE_LABEL_MODES,
     BOARD_ORIENTATION_OPTIONS,

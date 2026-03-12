@@ -68,6 +68,7 @@
           white: snapshot.whitePlayerType || "HUMAN",
           black: snapshot.blackPlayerType || "HUMAN"
         },
+        setupPlayerAnimals: snapshot.setupPlayerAnimals ? { ...snapshot.setupPlayerAnimals } : null,
         modeKey: snapshot.modeKey || "local-human"
       };
     }
@@ -150,7 +151,8 @@
         setupPlayers: record.setupPlayers ? { ...record.setupPlayers } : {
           white: record.whitePlayerType || "HUMAN",
           black: record.blackPlayerType || "HUMAN"
-        }
+        },
+        setupPlayerAnimals: record.setupPlayerAnimals ? { ...record.setupPlayerAnimals } : null
       };
 
       return normalized;

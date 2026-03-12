@@ -12,6 +12,7 @@
   const PLAYER_INFO_LOCAL = root.PLAYER_INFO || {};
   const PLAYER_ORDER_LOCAL = root.PLAYER_ORDER || ["white", "black"];
   const HINT_STAGE_INFO_LOCAL = root.HINT_STAGE_INFO || {};
+  const PLAYER_ANIMALS_LOCAL = root.PLAYER_ANIMALS || [];
   const DEFAULT_LANGUAGE = root.DEFAULT_LANGUAGE || "ko";
   const translateUi = root.translateUi || ((language, key, params = {}) => {
     const fallback = String(key || "");
@@ -90,6 +91,23 @@
     resolveLocalizedText(PLAYER_INFO_LOCAL[colorKey]?.label, language) || colorKey
   );
 
+  const getPlayerAnimalInfo = (animalKey) => {
+    if (!animalKey) return PLAYER_ANIMALS_LOCAL[0] || null;
+    return PLAYER_ANIMALS_LOCAL.find((entry) => entry.key === animalKey) || PLAYER_ANIMALS_LOCAL[0] || null;
+  };
+
+  const getPlayerAnimalEmoji = (animalKey) => getPlayerAnimalInfo(animalKey)?.emoji || "🐻";
+
+  const getPlayerAnimalLabel = (animalKey, language = DEFAULT_LANGUAGE) => (
+    resolveLocalizedText(getPlayerAnimalInfo(animalKey)?.label, language) || ""
+  );
+
+  const formatPlayerRoleWithAnimal = (state, animalKey, language = DEFAULT_LANGUAGE) => {
+    const role = getSetupStateLabel(state, true, language);
+    const animal = getPlayerAnimalLabel(animalKey, language);
+    return animal ? `${role} / ${animal}` : role;
+  };
+
   const cycleOptionKey = (options, currentKey) => {
     const index = options.findIndex((option) => option.key === currentKey);
     const nextIndex = index >= 0 ? (index + 1) % options.length : 0;
@@ -118,9 +136,14 @@
     return "";
   };
 
-  const buildSetupSummary = (setupPlayers, language = DEFAULT_LANGUAGE) => (
+  const buildSetupSummary = (setupPlayers, language = DEFAULT_LANGUAGE, setupPlayerAnimals = null) => (
     PLAYER_ORDER_LOCAL
-      .map((colorKey) => `${getPlayerLabel(colorKey, language)}: ${getSetupStateLabel(setupPlayers[colorKey], true, language)}`)
+      .map((colorKey) => {
+        const roleText = setupPlayerAnimals
+          ? formatPlayerRoleWithAnimal(setupPlayers[colorKey], setupPlayerAnimals[colorKey], language)
+          : getSetupStateLabel(setupPlayers[colorKey], true, language);
+        return `${getPlayerLabel(colorKey, language)}: ${roleText}`;
+      })
       .join(" / ")
   );
 
@@ -134,7 +157,7 @@
   const formatEngineScore = (scoreCp, scoreMate, language = DEFAULT_LANGUAGE) => {
     if (Number.isInteger(scoreMate)) {
       if (language === "ko") {
-        return scoreMate > 0 ? `${scoreMate}수 메이트` : `${Math.abs(scoreMate)}수 후 메이트 당함`;
+        return scoreMate > 0 ? `${scoreMate}수 메이트` : `${Math.abs(scoreMate)}수 뒤 메이트 당함`;
       }
       return scoreMate > 0 ? `Mate in ${scoreMate}` : `Mated in ${Math.abs(scoreMate)}`;
     }
@@ -158,6 +181,10 @@
     getPieceDisplayLabel,
     getPlayerColorKey,
     getPlayerLabel,
+    getPlayerAnimalInfo,
+    getPlayerAnimalEmoji,
+    getPlayerAnimalLabel,
+    formatPlayerRoleWithAnimal,
     cycleOptionKey,
     groupHistoryByMove,
     formatStatusReason,
