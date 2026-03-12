@@ -14,6 +14,12 @@ Track archive, post-game analysis, review cards, play-from-here, and legacy-isol
 
 ## Resolved issues
 
+- 2026-03-12 23:17
+  - Symptom: The first final ladder draft would have weakened `AI-1` too much and still left several public labels behind the intended final 800-2000 ladder.
+  - Cause: The earlier rebalance draft optimized for mid and top separation first, which made the entry tier feel too soft and left the UI labels out of sync with the intended final values.
+  - Fix: Finalized the level ladder to `800 / 1000 / 1150 / 1300 / 1500 / 1750 / 2000`, restored a sturdier `AI-1`/`AI-2` profile, and raised `AI-7` from `900ms` to `1000ms`.
+  - Result: The displayed ladder and engine parameters now match the intended final progression, with `AI-1` and `AI-2` staying beginner-friendly without becoming too random.
+
 - 2026-03-12 22:51
   - Symptom: The post-game result modal let the critical-moment cards grow until the bottom action buttons were partially hidden.
   - Cause: The result overlay used the generic modal layout, so the analysis card list expanded with content instead of becoming the only scroll region.

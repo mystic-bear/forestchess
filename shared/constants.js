@@ -29,94 +29,94 @@
   const AI_LEVEL_INFO = {
     1: {
       short: "AI-1",
-      label: { ko: "AI-1 / 600", en: "AI-1 / 600" },
+      label: { ko: "AI-1 / 800", en: "AI-1 / 800" },
       desc: { ko: "입문", en: "Entry" },
       engine: {
         mode: "weak_multipv",
-        movetime: 35,
+        movetime: 45,
         limitStrength: false,
         skillLevel: 0,
         multipv: 4,
-        choiceWeights: [0.4, 0.3, 0.2, 0.1],
+        choiceWeights: [0.40, 0.30, 0.20, 0.10],
         avoidMateInOne: true,
-        maxImmediateNetLoss: null
+        maxImmediateNetLoss: 800
       }
     },
     2: {
       short: "AI-2",
-      label: { ko: "AI-2 / 900", en: "AI-2 / 900" },
+      label: { ko: "AI-2 / 1000", en: "AI-2 / 1000" },
       desc: { ko: "쉬움", en: "Easy" },
       engine: {
         mode: "weak_multipv",
-        movetime: 55,
+        movetime: 65,
         limitStrength: false,
         skillLevel: 1,
         multipv: 4,
-        choiceWeights: [0.5, 0.25, 0.15, 0.1],
+        choiceWeights: [0.48, 0.24, 0.18, 0.10],
         avoidMateInOne: true,
         maxImmediateNetLoss: 500
       }
     },
     3: {
       short: "AI-3",
-      label: { ko: "AI-3 / 1200", en: "AI-3 / 1200" },
+      label: { ko: "AI-3 / 1150", en: "AI-3 / 1150" },
       desc: { ko: "학습", en: "Learning" },
       engine: {
         mode: "weak_multipv",
-        movetime: 80,
+        movetime: 90,
         limitStrength: false,
-        skillLevel: 2,
-        multipv: 3,
-        choiceWeights: [0.6, 0.25, 0.15],
+        skillLevel: 3,
+        multipv: 4,
+        choiceWeights: [0.58, 0.24, 0.12, 0.06],
         avoidMateInOne: true,
-        maxImmediateNetLoss: 240
+        maxImmediateNetLoss: 300
       }
     },
     4: {
       short: "AI-4",
-      label: { ko: "AI-4 / 1400", en: "AI-4 / 1400" },
+      label: { ko: "AI-4 / 1300", en: "AI-4 / 1300" },
       desc: { ko: "클럽", en: "Club" },
       engine: {
         mode: "weak_multipv",
-        movetime: 130,
+        movetime: 125,
         limitStrength: false,
         skillLevel: 4,
-        multipv: 2,
-        choiceWeights: [0.75, 0.25],
+        multipv: 3,
+        choiceWeights: [0.68, 0.20, 0.12],
         avoidMateInOne: true,
-        maxImmediateNetLoss: 150
+        maxImmediateNetLoss: 190
       }
     },
     5: {
       short: "AI-5",
-      label: { ko: "AI-5 / 1600", en: "AI-5 / 1600" },
+      label: { ko: "AI-5 / 1500", en: "AI-5 / 1500" },
       desc: { ko: "안정", en: "Solid" },
       engine: {
         mode: "elo_limit",
-        movetime: 320,
+        movetime: 280,
         limitStrength: true,
-        uciElo: 1600,
-        multipv: 2,
-        choiceWeights: [0.8, 0.2],
+        uciElo: 1550,
+        multipv: 3,
+        choiceWeights: [0.76, 0.16, 0.08],
         maxCpGapFromBest: 80,
         avoidMateInOne: true,
-        maxImmediateNetLoss: 120
+        maxImmediateNetLoss: 135
       }
     },
     6: {
       short: "AI-6",
-      label: { ko: "AI-6 / 1800", en: "AI-6 / 1800" },
+      label: { ko: "AI-6 / 1750", en: "AI-6 / 1750" },
       desc: { ko: "강함", en: "Strong" },
       engine: {
         mode: "elo_limit",
-        movetime: 550,
+        movetime: 520,
         limitStrength: true,
-        uciElo: 1800,
-        multipv: 2,
-        choiceWeights: [0.9, 0.1],
-        maxCpGapFromBest: 45,
+        uciElo: 1750,
+        multipv: 3,
+        choiceWeights: [0.84, 0.12, 0.04],
+        maxCpGapFromBest: 55,
         avoidMateInOne: true,
-        maxImmediateNetLoss: 100
+        maxImmediateNetLoss: 105
       }
     },
     7: {
@@ -125,11 +125,12 @@
       desc: { ko: "챌린지", en: "Challenge" },
       engine: {
         mode: "elo_limit",
-        movetime: 900,
+        movetime: 1000,
         limitStrength: true,
         uciElo: 2000,
         multipv: 1,
         choiceWeights: [1],
+        maxCpGapFromBest: 0,
         avoidMateInOne: true,
         maxImmediateNetLoss: 80
       }
