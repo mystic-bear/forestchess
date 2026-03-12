@@ -17,9 +17,10 @@ function main() {
   const ui = read("js/ui.js");
 
   assert.match(indexHtml, /Forest Chess/, "start screen title should be Forest Chess");
-  assert.match(indexHtml, /White \/ Black 설정/, "setup should reference White / Black");
+  assert.match(indexHtml, /White \/ Black setup|White \/ Black seats/, "setup should reference White / Black");
   assert.match(indexHtml, /js\/chess\/chess-state\.js/, "HTML should load the chess core");
-  assert.doesNotMatch(indexHtml, /루미큐브|새 줄|줄에 추가|조커|30룰/, "main HTML should not expose Rummikub copy");
+  assert.match(indexHtml, /Coach panel/, "Phase 3 HTML should expose the coach panel");
+  assert.doesNotMatch(indexHtml, /Rummikub|drawTile|workingTable|joker/i, "main HTML should not expose Rummikub copy");
 
   assert.match(constants, /AI-7/, "setup states should include AI-7");
   assert.doesNotMatch(constants, /"OFF"/, "setup states should no longer include OFF");
@@ -32,6 +33,7 @@ function main() {
   assert.match(ui, /board-grid/, "UI should render the chess board");
   assert.match(ui, /promotion-modal/, "UI should render the promotion modal");
   assert.match(ui, /move-list/, "UI should render the move list");
+  assert.match(ui, /hint-panel/, "UI should render the coach panel");
 
   console.log("PASS phase2-static-smoke");
 }

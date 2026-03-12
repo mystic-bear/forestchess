@@ -41,7 +41,7 @@ const ui = {
     });
 
     summary.innerHTML = `
-      <div class="setup-summary-title">현재 설정</div>
+      <div class="setup-summary-title">Current setup</div>
       <div class="setup-summary-body">${buildSetupSummary(game.setupPlayers)}</div>
     `;
   },
@@ -61,7 +61,7 @@ const ui = {
         <div class="setup-main">
           <div class="setup-icon ${colorKey}">${player.icon}</div>
           <div>
-            <div class="setup-title">${player.label} / ${player.korean}</div>
+            <div class="setup-title">${player.label}</div>
             <div class="setup-desc">${getSetupStateDescription(state)}</div>
           </div>
         </div>
@@ -75,14 +75,14 @@ const ui = {
     const orientation = BOARD_ORIENTATION_OPTIONS.find((entry) => entry.key === game.boardOrientation) || BOARD_ORIENTATION_OPTIONS[0];
     const options = [
       {
-        title: "기물 표시",
-        desc: "동물명, 체스명, 병기 모드 중 하나를 선택합니다.",
+        title: "Piece labels",
+        desc: "Switch between animal names, chess names, or both.",
         buttonLabel: labelMode.label,
         action: () => game.cyclePieceLabelMode()
       },
       {
-        title: "보드 방향",
-        desc: "게임 화면에서 기본 보드 방향을 정합니다.",
+        title: "Board orientation",
+        desc: "Choose which color sits at the bottom of the board.",
         buttonLabel: orientation.label,
         action: () => game.cycleBoardOrientationSetting()
       }
@@ -94,7 +94,7 @@ const ui = {
       row.className = "setup-row";
       row.innerHTML = `
         <div class="setup-main">
-          <div class="setup-icon option">♟</div>
+          <div class="setup-icon option">*</div>
           <div>
             <div class="setup-title">${option.title}</div>
             <div class="setup-desc">${option.desc}</div>
@@ -113,11 +113,12 @@ const ui = {
     const button = document.getElementById("btn-start-match");
     if (!button) return;
 
-    const playable = game.isSetupPlayableNow();
-    button.disabled = !playable;
-    button.innerText = playable
-      ? "사람 vs 사람 대국 시작"
-      : "AI 대국은 다음 단계에서 연결";
+    button.disabled = !game.canStartMatch();
+    if (game.hasAiConfigured() && !game.canUseAi()) {
+      button.innerText = "Start local board";
+      return;
+    }
+    button.innerText = "Start match";
   },
 
   renderPlayerPanels() {
@@ -137,12 +138,12 @@ const ui = {
       card.innerHTML = `
         <div class="player-card-top">
           <div>
-            <div class="player-name">${player.label} / ${player.korean}</div>
+            <div class="player-name">${player.label}</div>
             <div class="player-sub">${getSetupStateLabel(type, true)}</div>
           </div>
-          <div class="player-badge ${colorKey}">${currentTurn ? "현재 차례" : "대기 중"}</div>
+          <div class="player-badge ${colorKey}">${currentTurn ? "To move" : "Waiting"}</div>
         </div>
-        <div class="player-meta">${inCheck ? "체크 상태" : "정상 상태"}</div>
+        <div class="player-meta">${inCheck ? "In check" : game.aiThinking && currentTurn ? "Engine searching" : "Stable"}</div>
       `;
       container.appendChild(card);
     });
@@ -171,18 +172,22 @@ const ui = {
     const claimChip = document.getElementById("claim-chip");
     const boardNote = document.getElementById("board-note");
     const statusLine = document.getElementById("status-line");
+    const engineChip = document.getElementById("engine-chip");
 
     if (!boardShell) return;
 
-    statusLine.innerText = game.getStatusBanner();
-    boardNote.innerText = game.getBoardNote();
-    turnChip.innerText = `차례 ${game.currentState ? getPlayerLabel(game.getTurnColorKey()) : "-"}`;
-    lastMoveChip.innerText = `마지막 수 ${game.lastMove ? game.lastMove.san : "-"}`;
-    claimChip.innerText = game.canClaimDraw() ? game.getClaimDrawLabel() : "무승부 없음";
-    claimChip.classList.toggle("muted", !game.canClaimDraw());
+    if (statusLine) statusLine.innerText = game.getStatusBanner();
+    if (boardNote) boardNote.innerText = game.getBoardNote();
+    if (turnChip) turnChip.innerText = `Turn ${game.currentState ? getPlayerLabel(game.getTurnColorKey()) : "-"}`;
+    if (lastMoveChip) lastMoveChip.innerText = `Last ${game.lastMove ? game.lastMove.san : "-"}`;
+    if (claimChip) {
+      claimChip.innerText = game.canClaimDraw() ? game.getClaimDrawLabel() : "No draw";
+      claimChip.classList.toggle("muted", !game.canClaimDraw());
+    }
+    if (engineChip) engineChip.innerText = game.getEngineBadgeLabel();
 
     if (!game.currentState) {
-      boardShell.innerHTML = `<div class="board-empty">대국을 시작하면 8x8 체스보드가 표시됩니다.</div>`;
+      boardShell.innerHTML = `<div class="board-empty">Start a match to load the chess board.</div>`;
       return;
     }
 
@@ -192,6 +197,9 @@ const ui = {
     const rankOrder = game.boardOrientation === "white"
       ? [8, 7, 6, 5, 4, 3, 2, 1]
       : [1, 2, 3, 4, 5, 6, 7, 8];
+    const hintHighlight = game.getHintHighlight();
+    const hintFrom = hintHighlight ? ChessState.squareToIndex(hintHighlight.from) : null;
+    const hintTo = hintHighlight ? ChessState.squareToIndex(hintHighlight.to) : null;
 
     const board = document.createElement("div");
     board.className = "board-grid";
@@ -210,8 +218,8 @@ const ui = {
         const isLastFrom = game.lastMove && ChessState.squareToIndex(game.lastMove.from) === index;
         const isLastTo = game.lastMove && ChessState.squareToIndex(game.lastMove.to) === index;
         const isCheckSquare = game.checkSquare === index;
-        const button = document.createElement("button");
 
+        const button = document.createElement("button");
         button.className = [
           "square",
           isDark ? "dark" : "light",
@@ -220,10 +228,12 @@ const ui = {
           isCaptureTarget ? "capture-target" : "",
           isLastFrom ? "last-from" : "",
           isLastTo ? "last-to" : "",
-          isCheckSquare ? "in-check" : ""
+          isCheckSquare ? "in-check" : "",
+          hintFrom === index ? "hint-source" : "",
+          hintTo === index ? "hint-target" : ""
         ].filter(Boolean).join(" ");
         button.onclick = () => game.handleSquareClick(index);
-        button.disabled = game.isGameOver();
+        button.disabled = !game.canInteractWithBoard();
 
         if (colIndex === 0) {
           const rankLabel = document.createElement("span");
@@ -276,6 +286,91 @@ const ui = {
     `;
   },
 
+  renderHintPanel() {
+    const panel = document.getElementById("hint-panel");
+    if (!panel) return;
+
+    if (!game.currentState) {
+      panel.innerHTML = `
+        <div class="hint-empty">
+          <div class="hint-title">Coach panel</div>
+          <div class="hint-line">Start a match to request Stockfish-backed hints.</div>
+        </div>
+      `;
+      return;
+    }
+
+    const session = game.lastHintSession;
+    if (!session) {
+      panel.innerHTML = `
+        <div class="hint-empty">
+          <div class="hint-title">Coach panel</div>
+          <div class="hint-line">Use the coach button when you want guidance for the current position.</div>
+        </div>
+      `;
+      return;
+    }
+
+    const packet = session.packet;
+    const stage = game.getActiveHintStage();
+
+    if (!packet) {
+      panel.innerHTML = `
+        <div class="hint-card">
+          <div class="hint-header-row">
+            <div class="hint-title">Coach panel</div>
+            <div class="hint-chip">${session.loading ? "Analyzing" : "Waiting"}</div>
+          </div>
+          <div class="hint-line">The engine is still preparing the first hint.</div>
+        </div>
+      `;
+      return;
+    }
+
+    const stageRow = packet.stages.map((entry) => `
+      <button class="hint-stage-btn ${entry.level === (session.displayLevel || 1) ? "active" : ""}" ${entry.level > packet.availableStage ? "disabled" : ""} onclick="game.setHintStage(${entry.level})">
+        ${entry.label}
+      </button>
+    `).join("");
+
+    const alternatives = (packet.alternatives || []).map((entry) => `
+      <div class="hint-alt-row">
+        <span>${entry.moveSan || entry.moveUci}</span>
+        <span>${entry.note}</span>
+      </div>
+    `).join("");
+
+    const steps = (stage?.steps || packet.steps || []).map((step) => `<li>${step}</li>`).join("");
+
+    panel.innerHTML = `
+      <div class="hint-card ${packet.partial ? "partial" : ""}">
+        <div class="hint-header-row">
+          <div>
+            <div class="hint-title">${packet.title}</div>
+            <div class="hint-subtitle">${packet.partial ? "Partial analysis" : "Full analysis"}</div>
+          </div>
+          <div class="hint-chip">${packet.confidence || "medium"}</div>
+        </div>
+        <div class="hint-stage-row">${stageRow}</div>
+        <div class="hint-summary">${stage?.summary || packet.summary}</div>
+        <div class="hint-lead">${stage?.leadText || packet.leadText || ""}</div>
+        <div class="hint-reason">${stage?.reason || packet.reason || ""}</div>
+        <ul class="hint-steps">${steps}</ul>
+        <div class="hint-meta-row">
+          <div class="hint-meta"><strong>Move</strong> ${packet.moveSan || packet.moveUci || "-"}</div>
+          <div class="hint-meta"><strong>Threat</strong> ${packet.threatSummary || "-"}</div>
+        </div>
+        <div class="hint-meta-row">
+          <div class="hint-meta"><strong>From</strong> ${packet.from || "-"}</div>
+          <div class="hint-meta"><strong>To</strong> ${packet.to || "-"}</div>
+        </div>
+        ${alternatives ? `<div class="hint-alt-block"><div class="hint-alt-title">Alternatives</div>${alternatives}</div>` : ""}
+        ${packet.truncationNote ? `<div class="hint-note">${packet.truncationNote}</div>` : ""}
+        ${session.error ? `<div class="hint-note warn">${session.error}</div>` : ""}
+      </div>
+    `;
+  },
+
   renderCapturedPieces() {
     const whiteContainer = document.getElementById("captured-white");
     const blackContainer = document.getElementById("captured-black");
@@ -284,7 +379,7 @@ const ui = {
     const renderList = (container, items) => {
       container.innerHTML = "";
       if (items.length === 0) {
-        container.innerHTML = `<div class="capture-empty">없음</div>`;
+        container.innerHTML = `<div class="capture-empty">None</div>`;
         return;
       }
 
@@ -306,7 +401,7 @@ const ui = {
     container.innerHTML = "";
 
     if (game.moveHistory.length === 0) {
-      container.innerHTML = `<div class="move-empty">첫 수를 기다리는 중입니다.</div>`;
+      container.innerHTML = `<div class="move-empty">Waiting for the first move.</div>`;
       return;
     }
 
@@ -370,12 +465,16 @@ const ui = {
     const undoButton = document.getElementById("btn-undo-move");
     const drawButton = document.getElementById("btn-claim-draw");
     const hintButton = document.getElementById("btn-hint");
+
     if (undoButton) undoButton.disabled = !game.canUndo();
     if (drawButton) {
       drawButton.disabled = !game.canClaimDraw();
-      drawButton.innerText = game.canClaimDraw() ? game.getClaimDrawLabel() : "무승부 확인";
+      drawButton.innerText = game.canClaimDraw() ? game.getClaimDrawLabel() : "Claim draw";
     }
-    if (hintButton) hintButton.disabled = false;
+    if (hintButton) {
+      hintButton.disabled = !game.currentState || game.isGameOver() || game.pendingPromotion || !game.canUseCoach();
+      hintButton.innerText = game.getHintButtonLabel();
+    }
   },
 
   updateAll() {
@@ -385,6 +484,7 @@ const ui = {
     this.renderThemeLegend();
     this.renderBoard();
     this.renderInfoPanel();
+    this.renderHintPanel();
     this.renderCapturedPieces();
     this.renderMoveList();
     this.renderPromotionModal();

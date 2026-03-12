@@ -3,6 +3,11 @@ full_code*.md
 
 backup/
 *.zip
+stockfish.js-18.0.0/
+stockfish-18.js
+stockfish-18.wasm
+stockfish-18-single.js
+stockfish-18-single.wasm
 
 legacy/
 

@@ -566,6 +566,14 @@ button {
   box-shadow: inset 0 0 0 4px rgba(213, 86, 86, 0.9);
 }
 
+.square.hint-source {
+  box-shadow: inset 0 0 0 4px rgba(29, 116, 188, 0.88);
+}
+
+.square.hint-target {
+  background-image: linear-gradient(180deg, rgba(29, 116, 188, 0.24), rgba(29, 116, 188, 0.12));
+}
+
 .target-dot,
 .capture-ring {
   width: 15px;
@@ -643,6 +651,110 @@ button {
   margin-top: 12px;
   display: grid;
   gap: 10px;
+}
+
+.hint-panel {
+  margin-top: 12px;
+}
+
+.hint-card,
+.hint-empty {
+  display: grid;
+  gap: 12px;
+}
+
+.hint-card.partial {
+  opacity: 0.94;
+}
+
+.hint-header-row,
+.hint-meta-row,
+.hint-alt-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.hint-title {
+  font-size: 1rem;
+}
+
+.hint-subtitle,
+.hint-line,
+.hint-reason,
+.hint-note,
+.hint-meta,
+.hint-alt-title {
+  color: var(--text-muted);
+}
+
+.hint-chip {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(74, 107, 55, 0.1);
+  font-size: 0.78rem;
+}
+
+.hint-stage-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.hint-stage-btn {
+  padding: 9px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--panel-line);
+}
+
+.hint-stage-btn.active {
+  background: rgba(216, 108, 61, 0.16);
+  border-color: rgba(216, 108, 61, 0.45);
+  color: var(--accent-deep);
+}
+
+.hint-stage-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hint-summary {
+  font-size: 1rem;
+}
+
+.hint-lead {
+  line-height: 1.45;
+}
+
+.hint-steps {
+  margin-left: 18px;
+  display: grid;
+  gap: 6px;
+}
+
+.hint-alt-block {
+  display: grid;
+  gap: 8px;
+}
+
+.hint-alt-row {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 0.84rem;
+}
+
+.hint-note {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(74, 107, 55, 0.08);
+}
+
+.hint-note.warn {
+  background: rgba(213, 86, 86, 0.12);
+  color: #8c2d2d;
 }
 
 .info-line {

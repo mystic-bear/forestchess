@@ -13,56 +13,55 @@
         <div class="hero-kicker">Family Chess Coach</div>
         <h1 class="hero-title">Forest Chess</h1>
         <p class="hero-text">
-          동물 캐릭터로 배우는 정통 체스입니다.
-          이번 단계에서는 <strong>사람 vs 사람</strong> 로컬 대국과 보드 UI를 완성합니다.
+          Animal-themed classical chess for families.
+          Phase 3 connects real Stockfish move search, playable AI levels, and staged coach hints.
         </p>
         <div class="hero-note">
-          AI와 코치 힌트는 다음 단계에서 연결됩니다. 이번 단계는 체스판과 입력 흐름을 안정화하는 데 집중합니다.
+          The rules stay pure chess. Animals are labels only. AI seats and coach hints now run through the shared worker pipeline.
         </div>
       </div>
 
       <div id="menu-main" class="menu-card">
         <div class="section-head">
           <div class="section-kicker">Quick Start</div>
-          <div class="section-title">빠른 시작</div>
+          <div class="section-title">Fast presets</div>
         </div>
         <div id="quick-start-list" class="preset-grid"></div>
 
         <div class="section-head top-gap">
           <div class="section-kicker">Custom Setup</div>
-          <div class="section-title">사용자 설정</div>
+          <div class="section-title">White / Black setup</div>
         </div>
         <div class="setup-summary-card">
           <div id="setup-summary" class="setup-summary"></div>
-          <button class="action-btn primary" onclick="ui.showSetup()">White / Black 설정 열기</button>
+          <button class="action-btn primary" onclick="ui.showSetup()">Open custom setup</button>
         </div>
       </div>
 
       <div id="menu-setup" class="menu-card hidden">
         <div class="section-head">
           <div class="section-kicker">Setup</div>
-          <div class="section-title">White / Black 설정</div>
+          <div class="section-title">White / Black seats</div>
         </div>
 
         <div id="setup-player-list" class="setup-list"></div>
 
         <div class="section-head top-gap">
           <div class="section-kicker">Display</div>
-          <div class="section-title">표시 옵션</div>
+          <div class="section-title">Board options</div>
         </div>
         <div id="setup-option-list" class="setup-list"></div>
 
         <div class="setup-help">
-          <div class="setup-help-title">이번 단계 안내</div>
+          <div class="setup-help-title">Phase 3 notes</div>
           <div class="setup-help-body">
-            AI-1~AI-7 표기와 설정 UI는 준비되어 있지만, 실제 엔진 연결은 다음 단계에서 진행합니다.
-            이번 단계에서는 사람 vs 사람 로컬 대국이 끝까지 가능해야 합니다.
+            AI-1 to AI-7 are now live through the single worker entry point. Coach hints use a stronger analysis profile and reveal direction, candidate piece, then exact move.
           </div>
         </div>
 
         <div class="setup-actions">
-          <button id="btn-start-match" class="action-btn primary" onclick="game.startFromSetup()">대국 시작</button>
-          <button class="action-btn secondary" onclick="ui.hideSetup()">뒤로</button>
+          <button id="btn-start-match" class="action-btn primary" onclick="game.startFromSetup()">Start match</button>
+          <button class="action-btn secondary" onclick="ui.hideSetup()">Back</button>
         </div>
       </div>
     </div>
@@ -73,26 +72,27 @@
       <header class="game-topbar">
         <div class="topbar-title-block">
           <div class="topbar-title">Forest Chess Board</div>
-          <div id="status-line" class="topbar-status">대국 준비 중</div>
+          <div id="status-line" class="topbar-status">Board ready.</div>
         </div>
         <div class="topbar-actions">
-          <button id="btn-rotate-board" class="mini-btn" onclick="game.toggleBoardOrientation()">보드 회전</button>
-          <button id="btn-undo-move" class="mini-btn" onclick="game.undoMove()">무르기</button>
-          <button id="btn-claim-draw" class="mini-btn" onclick="game.claimDraw()">무승부 확인</button>
-          <button id="btn-hint" class="mini-btn ghost" onclick="game.requestHint()">힌트 준비중</button>
-          <button id="btn-restart" class="mini-btn" onclick="game.restart()">다시 시작</button>
-          <button id="btn-menu" class="mini-btn ghost" onclick="game.toMenu()">메뉴로</button>
+          <div id="engine-chip" class="status-chip">Ready</div>
+          <button id="btn-rotate-board" class="mini-btn" onclick="game.toggleBoardOrientation()">Flip board</button>
+          <button id="btn-undo-move" class="mini-btn" onclick="game.undoMove()">Undo</button>
+          <button id="btn-claim-draw" class="mini-btn" onclick="game.claimDraw()">Claim draw</button>
+          <button id="btn-hint" class="mini-btn ghost" onclick="game.requestHint()">Coach hint</button>
+          <button id="btn-restart" class="mini-btn" onclick="game.restart()">Restart</button>
+          <button id="btn-menu" class="mini-btn ghost" onclick="game.toMenu()">Menu</button>
         </div>
       </header>
 
       <div class="game-grid">
         <aside class="sidebar-panel">
           <div class="panel-card">
-            <div class="panel-title">플레이어</div>
+            <div class="panel-title">Players</div>
             <div id="player-panel-list" class="player-panel-list"></div>
           </div>
           <div class="panel-card">
-            <div class="panel-title">동물 스킨 안내</div>
+            <div class="panel-title">Animal legend</div>
             <div id="theme-legend" class="theme-legend"></div>
           </div>
         </aside>
@@ -100,13 +100,13 @@
         <main class="board-panel">
           <div class="board-panel-head">
             <div>
-              <div class="board-title">8x8 체스보드</div>
-              <div id="board-note" class="board-note">말을 눌러 합법 수를 확인하고 이동하세요.</div>
+              <div class="board-title">8x8 board</div>
+              <div id="board-note" class="board-note">Select a piece to see its legal moves.</div>
             </div>
             <div class="status-chip-row">
-              <div id="turn-chip" class="status-chip">차례 -</div>
-              <div id="last-move-chip" class="status-chip">마지막 수 -</div>
-              <div id="claim-chip" class="status-chip muted">무승부 없음</div>
+              <div id="turn-chip" class="status-chip">Turn -</div>
+              <div id="last-move-chip" class="status-chip">Last -</div>
+              <div id="claim-chip" class="status-chip muted">No draw</div>
             </div>
           </div>
 
@@ -115,22 +115,26 @@
 
         <aside class="sidebar-panel">
           <div class="panel-card">
-            <div class="panel-title">대국 정보</div>
+            <div class="panel-title">Board info</div>
             <div id="info-panel" class="info-panel"></div>
           </div>
           <div class="panel-card">
-            <div class="panel-title">잡힌 기물</div>
+            <div class="panel-title">Coach panel</div>
+            <div id="hint-panel" class="hint-panel"></div>
+          </div>
+          <div class="panel-card">
+            <div class="panel-title">Captured pieces</div>
             <div class="capture-block">
-              <div class="capture-title">백이 잃은 기물</div>
+              <div class="capture-title">Captured from White</div>
               <div id="captured-white" class="capture-list"></div>
             </div>
             <div class="capture-block">
-              <div class="capture-title">흑이 잃은 기물</div>
+              <div class="capture-title">Captured from Black</div>
               <div id="captured-black" class="capture-list"></div>
             </div>
           </div>
           <div class="panel-card move-panel">
-            <div class="panel-title">수순</div>
+            <div class="panel-title">Moves</div>
             <div id="move-list" class="move-list"></div>
           </div>
         </aside>
@@ -140,27 +144,27 @@
 
   <div id="promotion-modal" class="overlay hidden">
     <div class="overlay-card">
-      <div class="overlay-title">프로모션 선택</div>
-      <div class="overlay-text">마지막 줄에 도착한 폰을 어떤 기물로 바꿀지 선택하세요.</div>
+      <div class="overlay-title">Choose promotion</div>
+      <div class="overlay-text">Your pawn reached the last rank. Pick the piece to promote to.</div>
       <div id="promotion-options" class="promotion-options"></div>
       <div class="overlay-actions">
-        <button class="action-btn secondary" onclick="game.cancelPromotion()">취소</button>
+        <button class="action-btn secondary" onclick="game.cancelPromotion()">Cancel</button>
       </div>
     </div>
   </div>
 
   <div id="result-modal" class="overlay hidden">
     <div class="overlay-card">
-      <div id="result-title" class="overlay-title">대국 종료</div>
-      <div id="result-text" class="overlay-text">결과를 계산 중입니다.</div>
+      <div id="result-title" class="overlay-title">Game over</div>
+      <div id="result-text" class="overlay-text">The result is being prepared.</div>
       <div class="overlay-actions">
-        <button class="action-btn primary" onclick="game.restart()">다시 하기</button>
-        <button class="action-btn secondary" onclick="game.toMenu()">메뉴로</button>
+        <button class="action-btn primary" onclick="game.restart()">Restart</button>
+        <button class="action-btn secondary" onclick="game.toMenu()">Menu</button>
       </div>
     </div>
   </div>
 
-  <div id="toast" class="toast">알림</div>
+  <div id="toast" class="toast">Notice</div>
 
   <script src="shared/constants.js"></script>
   <script src="shared/utils.js"></script>

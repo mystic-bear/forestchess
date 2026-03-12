@@ -10,7 +10,7 @@ try {
 window.aiBridge = aiBridge;
 window.ui = ui;
 
-const game = new Game();
+const game = new Game({ aiBridge, ui });
 window.game = game;
 
 ui.renderStart();
