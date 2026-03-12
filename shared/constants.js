@@ -77,6 +77,13 @@
     multipv: 3
   };
 
+  const REVIEW_PROFILE = {
+    movetime: 180,
+    skillLevel: 18,
+    multipv: 2,
+    maxMoments: 5
+  };
+
   const ENGINE_ASSET_CANDIDATES = [
     "../stockfish-18-lite-single.js",
     "../stockfish-18-asm.js",
@@ -180,6 +187,7 @@
     SETUP_STATES,
     AI_LEVEL_INFO,
     COACH_PROFILE,
+    REVIEW_PROFILE,
     ENGINE_ASSET_CANDIDATES,
     QUICK_PRESETS,
     PIECE_THEME,

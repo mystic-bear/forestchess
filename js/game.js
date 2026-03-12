@@ -74,8 +74,10 @@
         message: this.getEngineMessage(this.aiBridge?.lastError)
       };
       this.resumeSnapshot = null;
+      this.archiveGames = [];
       this.resetSession();
       this.refreshResumeSnapshot();
+      this.refreshArchiveList();
     }
 
     loadLanguageSetting() {
@@ -109,6 +111,7 @@
       if (code === "worker-init-failed" || code === "engine-init-failed") return this.t("engine.initFailed");
       if (code === "choose-move-timeout") return this.t("engine.moveFailed");
       if (code === "hint-timeout") return this.t("engine.hintFailed");
+      if (code === "review-timeout") return this.t("analysis.failed");
       if (code === "worker-unavailable" || code === "worker-crashed") return this.t("engine.unavailable");
       if (errorLike?.message) return errorLike.message;
       return "";
@@ -174,7 +177,20 @@
       this.reviewState = {
         open: false,
         frames: [],
-        index: 0
+        index: 0,
+        sourceType: "live",
+        gameId: null
+      };
+      this.finishedGameId = null;
+      this.archiveOverlayOpen = false;
+      this.analysisState = {
+        gameId: null,
+        status: "none",
+        loading: false,
+        progress: null,
+        moments: [],
+        overall: null,
+        error: null
       };
     }
 
@@ -189,6 +205,19 @@
     refreshResumeSnapshot() {
       this.resumeSnapshot = this.saveManager ? this.saveManager.loadLatest() : null;
       return this.resumeSnapshot;
+    }
+
+    refreshArchiveList() {
+      this.archiveGames = this.saveManager ? this.saveManager.listFinishedGames(30) : [];
+      return this.archiveGames;
+    }
+
+    getArchiveGames() {
+      return this.archiveGames;
+    }
+
+    hasArchiveGames() {
+      return this.archiveGames.length > 0;
     }
 
     hasResumeCandidate() {
@@ -278,8 +307,12 @@
       };
     }
 
-    persistLatestGame() {
+    persistLatestGame(options = {}) {
       if (!this.saveManager) return null;
+      if (this.resultState?.terminal && !options.allowTerminal) {
+        this.clearSavedGame();
+        return null;
+      }
       const snapshot = this.buildSaveSnapshot();
       if (!snapshot) return null;
       const saved = this.saveManager.saveLatest(snapshot);
@@ -290,7 +323,146 @@
     clearSavedGame() {
       if (!this.saveManager) return;
       this.saveManager.clearLatest();
-      this.resumeSnapshot = null;
+      this.refreshResumeSnapshot();
+    }
+
+    buildFinishedGameRecord() {
+      if (!this.chessGame || !this.currentState || !this.resultState?.terminal) return null;
+      const summaryLines = ChessReview.buildReviewSummary(this, this.language);
+      return {
+        id: this.finishedGameId || null,
+        savedAt: new Date().toISOString(),
+        finishedAt: new Date().toISOString(),
+        initialFen: this.chessGame.initialFen,
+        finalFen: this.getCurrentFen(),
+        moveHistoryUci: this.moveHistory.map((entry) => entry.uci),
+        moveHistorySan: this.moveHistory.map((entry) => entry.san),
+        result: this.resultState.result,
+        reason: this.resultState.reason,
+        whitePlayerType: this.whitePlayerType,
+        blackPlayerType: this.blackPlayerType,
+        language: this.language,
+        reviewSummary: {
+          line1: summaryLines[0] || "",
+          line2: summaryLines[1] || "",
+          line3: summaryLines[2] || ""
+        },
+        analysisStatus: this.analysisState.gameId === this.finishedGameId
+          ? this.analysisState.status
+          : "none",
+        analysis: this.analysisState.gameId === this.finishedGameId && this.analysisState.moments.length > 0
+          ? {
+              gameId: this.finishedGameId,
+              moments: this.analysisState.moments,
+              overall: this.analysisState.overall
+            }
+          : null,
+        lastMove: this.lastMove ? { ...this.lastMove } : null,
+        setupPlayers: { ...this.setupPlayers }
+      };
+    }
+
+    saveArchiveRecord(record) {
+      if (!this.saveManager || !record) return null;
+      const saved = this.saveManager.saveFinishedGame(record);
+      if (!saved) return null;
+      this.finishedGameId = saved.id;
+      this.refreshArchiveList();
+      return saved;
+    }
+
+    archiveFinishedGame() {
+      const record = this.buildFinishedGameRecord();
+      if (!record) return null;
+      const existing = this.finishedGameId ? this.saveManager?.loadFinishedGame(this.finishedGameId) : null;
+      const saved = this.saveArchiveRecord({
+        ...existing,
+        ...record,
+        id: this.finishedGameId || existing?.id || record.id || null,
+        analysisStatus: existing?.analysisStatus || record.analysisStatus || "none",
+        analysis: existing?.analysis || record.analysis || null
+      });
+      if (saved) {
+        this.clearSavedGame();
+      }
+      return saved;
+    }
+
+    updateArchiveAnalysis(gameId, analysis, analysisStatus = "done") {
+      if (!this.saveManager || !gameId) return null;
+      const existing = this.saveManager.loadFinishedGame(gameId);
+      if (!existing) return null;
+      const saved = this.saveArchiveRecord({
+        ...existing,
+        analysisStatus,
+        analysis: analysis
+          ? {
+              gameId,
+              moments: analysis.moments || [],
+              overall: analysis.overall || null
+            }
+          : existing.analysis || null
+      });
+      return saved;
+    }
+
+    getArchiveRecord(gameId) {
+      if (!this.saveManager || !gameId) return null;
+      return this.saveManager.loadFinishedGame(gameId);
+    }
+
+    openArchive() {
+      this.refreshArchiveList();
+      this.archiveOverlayOpen = true;
+      this.refreshUi();
+    }
+
+    closeArchive() {
+      if (!this.archiveOverlayOpen) return;
+      this.archiveOverlayOpen = false;
+      this.refreshUi();
+    }
+
+    deleteArchivedGame(gameId) {
+      if (!this.saveManager || !gameId) return false;
+      const deleted = this.saveManager.deleteFinishedGame(gameId);
+      if (!deleted) return false;
+      this.refreshArchiveList();
+      if (this.analysisState.gameId === gameId) {
+        this.analysisState = {
+          gameId: null,
+          status: "none",
+          loading: false,
+          progress: null,
+          moments: [],
+          overall: null,
+          error: null
+        };
+      }
+      this.refreshUi();
+      return true;
+    }
+
+    getAnalysisCardsForGame(gameId = null) {
+      if (gameId && this.analysisState.gameId === gameId && this.analysisState.moments.length > 0) {
+        return ChessReview.buildCriticalMomentCards({ moments: this.analysisState.moments });
+      }
+      if (gameId) {
+        const record = this.getArchiveRecord(gameId);
+        return ChessReview.buildCriticalMomentCards(record?.analysis || null);
+      }
+      return ChessReview.buildCriticalMomentCards({ moments: this.analysisState.moments });
+    }
+
+    buildReviewTarget(record) {
+      if (!record) return null;
+      return {
+        gameId: record.id,
+        initialFen: record.initialFen,
+        moveHistoryUci: record.moveHistoryUci || [],
+        language: record.language || this.language,
+        maxMoments: 5
+      };
     }
 
     applyPreset(presetKey) {
@@ -409,6 +581,7 @@
       this.resetSession();
       this.invalidateAsyncState();
       this.refreshResumeSnapshot();
+      this.refreshArchiveList();
       this.notifyUi("hideSetup");
       this.notifyUi("showScreen", "start-screen");
       this.notifyUi("renderStart");
@@ -579,6 +752,14 @@
 
         this.persistLatestGame();
 
+        let archivedRecord = null;
+        if (this.resultState?.terminal) {
+          archivedRecord = this.archiveFinishedGame();
+          if (archivedRecord && this.canUseCoach()) {
+            this.requestPostGameAnalysis(archivedRecord.id);
+          }
+        }
+
         if (!this.currentStatus?.terminal && source !== "ai-failure") {
           this.maybeRequestAiMove();
         }
@@ -658,6 +839,10 @@
       this.invalidateAsyncState();
       this.refreshDerivedState();
       this.persistLatestGame();
+      const archivedRecord = this.archiveFinishedGame();
+      if (archivedRecord && this.canUseCoach()) {
+        this.requestPostGameAnalysis(archivedRecord.id);
+      }
       this.refreshUi();
     }
 
@@ -983,6 +1168,118 @@
       };
     }
 
+    requestPostGameAnalysis(gameId = null) {
+      const targetId = gameId || this.finishedGameId;
+      const record = this.getArchiveRecord(targetId);
+      if (!targetId || !record) return Promise.resolve(null);
+
+      if (!this.aiBridge || typeof this.aiBridge.analyzeGame !== "function" || !this.canUseCoach()) {
+        this.analysisState = {
+          gameId: targetId,
+          status: "failed",
+          loading: false,
+          progress: null,
+          moments: record.analysis?.moments || [],
+          overall: record.analysis?.overall || null,
+          error: this.t("analysis.failed")
+        };
+        this.updateArchiveAnalysis(targetId, record.analysis || null, "failed");
+        this.refreshUi();
+        return Promise.resolve(null);
+      }
+
+      const stateVersion = this.stateVersion;
+      this.analysisState = {
+        gameId: targetId,
+        status: "queued",
+        loading: true,
+        progress: null,
+        moments: record.analysis?.moments || [],
+        overall: record.analysis?.overall || null,
+        error: null
+      };
+      this.refreshUi();
+
+      return this.aiBridge.analyzeGame(
+        this.buildReviewTarget(record),
+        stateVersion,
+        {
+          onProgress: (progressMeta) => {
+            if (stateVersion !== this.stateVersion) return;
+            if (this.analysisState.gameId !== targetId || !this.analysisState.loading) return;
+            this.analysisState.progress = progressMeta;
+            this.refreshUi();
+          }
+        }
+      ).then((result) => {
+        if (stateVersion !== this.stateVersion) return null;
+        const review = result?.review || { gameId: targetId, moments: [], overall: null };
+        this.analysisState = {
+          gameId: targetId,
+          status: "done",
+          loading: false,
+          progress: null,
+          moments: review.moments || [],
+          overall: review.overall || null,
+          error: null
+        };
+        this.updateArchiveAnalysis(targetId, review, "done");
+        this.refreshUi();
+        return review;
+      }).catch((error) => {
+        if (stateVersion !== this.stateVersion) return null;
+        this.analysisState = {
+          gameId: targetId,
+          status: "failed",
+          loading: false,
+          progress: null,
+          moments: record.analysis?.moments || [],
+          overall: record.analysis?.overall || null,
+          error: this.getEngineMessage(error) || this.t("analysis.failed")
+        };
+        this.updateArchiveAnalysis(targetId, record.analysis || null, "failed");
+        this.refreshUi();
+        return null;
+      });
+    }
+
+    startFromFenTrainingPosition(fen, options = {}) {
+      const startFen = String(fen || "").trim();
+      if (!startFen) return false;
+      const state = ChessState.parseFen(startFen);
+      const turnColorKey = getPlayerColorKey(state.turn);
+      const oppositeColorKey = turnColorKey === "white" ? "black" : "white";
+      const aiLevel = options.aiLevel || "AI-3";
+
+      this.cancelPendingAsync();
+      this.resetSession();
+      this.modeKey = "play-from-here";
+      this.archiveOverlayOpen = false;
+      this.setupPlayers = { white: "HUMAN", black: "HUMAN" };
+
+      if (options.mode === "human") {
+        this.whitePlayerType = "HUMAN";
+        this.blackPlayerType = "HUMAN";
+      } else {
+        this.whitePlayerType = "HUMAN";
+        this.blackPlayerType = "HUMAN";
+        this.setConfiguredPlayerType(turnColorKey, "HUMAN");
+        this.setConfiguredPlayerType(oppositeColorKey, this.canUseAi() ? aiLevel : "HUMAN");
+      }
+
+      this.setupPlayers.white = this.whitePlayerType;
+      this.setupPlayers.black = this.blackPlayerType;
+      this.chessGame = ChessRules.createGame({ fen: startFen });
+      this.invalidateAsyncState();
+      this.refreshDerivedState();
+      this.persistLatestGame();
+      this.notifyUi("hideSetup");
+      this.notifyUi("showScreen", "game-screen");
+      this.refreshUi();
+      this.maybeRequestAiMove();
+      return true;
+    }
+
     getResultSummary() {
       if (!this.resultState?.terminal) return null;
 
@@ -1012,12 +1309,34 @@
       return !!this.currentState && this.moveHistory.length > 0;
     }
 
-    openReview() {
+    openReview(targetPly = null) {
       if (!this.canOpenReview()) return;
       this.reviewState.frames = ChessReview.buildReplayFrames(this);
-      this.reviewState.index = Math.max(0, this.reviewState.frames.length - 1);
+      this.reviewState.index = targetPly
+        ? Math.max(0, this.reviewState.frames.findIndex((frame) => frame.ply === targetPly))
+        : Math.max(0, this.reviewState.frames.length - 1);
       this.reviewState.open = true;
+      this.reviewState.sourceType = "live";
+      this.reviewState.gameId = this.finishedGameId || null;
       this.refreshUi();
+    }
+
+    openFinishedGameReview(gameId, targetPly = null) {
+      const record = this.getArchiveRecord(gameId);
+      if (!record) return false;
+      const replayGame = record.moveHistoryUci?.length
+        ? ChessRules.playMoves(record.moveHistoryUci, { fen: record.initialFen })
+        : ChessRules.createGame({ fen: record.initialFen });
+      this.reviewState.frames = ChessReview.buildReplayFrames(replayGame);
+      const targetIndex = targetPly
+        ? this.reviewState.frames.findIndex((frame) => frame.ply === targetPly)
+        : this.reviewState.frames.length - 1;
+      this.reviewState.index = Math.max(0, targetIndex);
+      this.reviewState.open = true;
+      this.reviewState.sourceType = "archive";
+      this.reviewState.gameId = gameId;
+      this.refreshUi();
+      return true;
     }
 
     closeReview() {
@@ -1040,6 +1359,21 @@
     getActiveReviewFrame() {
       if (!this.reviewState.frames.length) return null;
       return this.reviewState.frames[this.reviewState.index] || null;
+    }
+
+    jumpToCriticalMoment(gameId, ply) {
+      if (gameId) {
+        this.openFinishedGameReview(gameId, ply);
+        return;
+      }
+      this.openReview(ply);
+    }
+
+    playFromCriticalMoment(gameId, ply) {
+      const cards = this.getAnalysisCardsForGame(gameId);
+      const moment = cards.find((entry) => entry.ply === ply) || null;
+      if (!moment?.launch?.fen) return false;
+      return this.startFromFenTrainingPosition(moment.launch.fen, { mode: "ai" });
     }
 
     getCurrentFen() {

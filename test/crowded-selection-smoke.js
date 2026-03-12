@@ -40,18 +40,18 @@ function loadSplitContext() {
   const context = createContext();
   const files = [
     "shared/constants.js",
-    "shared/rules-core.js",
+    "legacy_rummikub/shared/rules-core.js",
     "shared/utils.js",
-    "worker/ai-utils.js",
-    "worker/ai-base.js",
-    "worker/ai-levels.js",
-    "worker/ai-dispatcher.js",
-    "worker/hint-engine.js"
+    "legacy_rummikub/worker/ai-utils.js",
+    "legacy_rummikub/worker/ai-base.js",
+    "legacy_rummikub/worker/ai-levels.js",
+    "legacy_rummikub/worker/ai-dispatcher.js",
+    "legacy_rummikub/worker/hint-engine.js"
   ];
 
   files.forEach((relativePath) => {
     let source = fs.readFileSync(path.join(ROOT, relativePath), "utf8");
-    if (relativePath === "worker/ai-dispatcher.js") {
+    if (relativePath === "legacy_rummikub/worker/ai-dispatcher.js") {
       source += "\nthis.RummyAI = RummyAI;\n";
     }
     vm.runInContext(source, context, { filename: relativePath });

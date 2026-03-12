@@ -511,6 +511,9 @@ const ui = {
     const title = document.getElementById("result-title");
     const text = document.getElementById("result-text");
     const reviewSummary = document.getElementById("review-summary");
+    const analysisProgress = document.getElementById("analysis-progress");
+    const analysisCardList = document.getElementById("analysis-card-list");
+    const analyzeButton = document.getElementById("btn-analyze-game");
     const replayButton = document.getElementById("btn-open-review");
     const exportButton = document.getElementById("btn-export-pgn");
     const copyFenButton = document.getElementById("btn-copy-fen");
@@ -520,6 +523,8 @@ const ui = {
     if (!summary) {
       modal.classList.add("hidden");
       if (reviewSummary) reviewSummary.innerHTML = "";
+      if (analysisCardList) analysisCardList.innerHTML = "";
+      if (analysisProgress) analysisProgress.classList.add("hidden");
       return;
     }
 
@@ -530,10 +535,71 @@ const ui = {
         .map((line) => `<div class="review-line">${line}</div>`)
         .join("");
     }
+    if (analyzeButton) analyzeButton.innerText = this.t("analysis.start");
     if (replayButton) replayButton.innerText = this.t("review.open");
     if (exportButton) exportButton.innerText = this.t("export.pgn");
     if (copyFenButton) copyFenButton.innerText = this.t("export.copyFen");
+
+    const finishedGameId = game.finishedGameId || null;
+    const isActiveAnalysis = finishedGameId && game.analysisState.gameId === finishedGameId;
+    const cards = finishedGameId ? game.getAnalysisCardsForGame(finishedGameId) : [];
+    const progressParts = game.analysisState.progress || null;
+    if (analysisProgress) {
+      if (isActiveAnalysis && game.analysisState.loading) {
+        analysisProgress.classList.remove("hidden");
+        analysisProgress.innerText = this.t("analysis.running", {
+          completed: progressParts?.completed || 0,
+          total: progressParts?.total || game.moveHistory.length
+        });
+      } else if (finishedGameId && cards.length > 0) {
+        analysisProgress.classList.remove("hidden");
+        analysisProgress.innerText = this.t("analysis.doneCount", { count: cards.length });
+      } else {
+        analysisProgress.classList.add("hidden");
+        analysisProgress.innerText = "";
+      }
+    }
+    this.renderAnalysisCards(analysisCardList, cards, finishedGameId);
     modal.classList.remove("hidden");
+  },
+
+  renderAnalysisCards(container, cards, gameId = null, options = {}) {
+    if (!container || !window.game) return;
+    container.innerHTML = "";
+
+    if (!Array.isArray(cards) || cards.length === 0) {
+      if (options.showEmpty !== false) {
+        container.innerHTML = `<div class="analysis-empty">${this.t("analysis.empty")}</div>`;
+      }
+      return;
+    }
+
+    cards.forEach((card) => {
+      const node = document.createElement("div");
+      node.className = "analysis-card";
+      const categoryLabel = this.t(`analysis.category.${card.category}`);
+      const themeLabel = this.t(`analysis.theme.${card.theme}`);
+      node.innerHTML = `
+        <div class="analysis-head">
+          <div class="analysis-title">${card.summary}</div>
+          <div class="analysis-chip">${categoryLabel} · ${themeLabel}</div>
+        </div>
+        <div class="analysis-meta">
+          <div><strong>${this.t("analysis.playedMove")}</strong> ${card.moveSan || card.playedUci || "-"}</div>
+          <div><strong>${this.t("analysis.betterMove")}</strong> ${card.bestSan || card.bestUci || "-"}</div>
+          <div>${card.explanation}</div>
+          <div>${card.retryPrompt}</div>
+        </div>
+        <div class="analysis-actions">
+          <button class="action-btn secondary">${this.t("analysis.jump")}</button>
+          <button class="action-btn primary">${this.t("analysis.playFromHere")}</button>
+        </div>
+      `;
+      const [jumpButton, playButton] = node.querySelectorAll("button");
+      jumpButton.onclick = () => game.jumpToCriticalMoment(gameId, card.ply);
+      playButton.onclick = () => game.playFromCriticalMoment(gameId, card.ply);
+      container.appendChild(node);
+    });
   },
 
   renderReviewOverlay() {
@@ -618,10 +684,78 @@ const ui = {
     overlay.classList.remove("hidden");
   },
 
+  renderArchiveOverlay() {
+    const overlay = document.getElementById("archive-overlay");
+    const list = document.getElementById("archive-list");
+    if (!overlay || !list || !window.game) return;
+
+    if (!game.archiveOverlayOpen) {
+      overlay.classList.add("hidden");
+      list.innerHTML = "";
+      return;
+    }
+
+    const archiveGames = game.getArchiveGames();
+    if (!archiveGames.length) {
+      list.innerHTML = `<div class="archive-empty">${this.t("archive.empty")}</div>`;
+      overlay.classList.remove("hidden");
+      return;
+    }
+
+    const locale = game.language === "ko" ? "ko-KR" : "en-US";
+    list.innerHTML = "";
+    archiveGames.forEach((record) => {
+      const cards = game.getAnalysisCardsForGame(record.id);
+      const activeAnalysis = game.analysisState.gameId === record.id && game.analysisState.loading;
+      const entry = document.createElement("div");
+      entry.className = "archive-entry";
+      entry.innerHTML = `
+        <div class="archive-head">
+          <div>
+            <div class="archive-title">${buildSetupSummary(record.setupPlayers || {
+              white: record.whitePlayerType,
+              black: record.blackPlayerType
+            }, game.language)}</div>
+            <div class="archive-meta">
+              <div>${this.t("archive.finishedAt", { time: new Date(record.finishedAt || record.savedAt).toLocaleString(locale) })}</div>
+              <div>${this.t("archive.result", { result: record.result || "*" })}</div>
+              <div>${record.reviewSummary?.line1 || ""}</div>
+              <div>${record.reviewSummary?.line2 || ""}</div>
+              <div>${record.reviewSummary?.line3 || ""}</div>
+            </div>
+          </div>
+          <div class="analysis-chip">${this.t(`analysis.status.${activeAnalysis ? "queued" : (record.analysisStatus || "none")}`)}</div>
+        </div>
+        <div class="archive-actions">
+          <button class="action-btn secondary">${this.t("review.open")}</button>
+          <button class="action-btn secondary">${this.t("analysis.start")}</button>
+          <button class="action-btn secondary">${this.t("archive.delete")}</button>
+        </div>
+        <div class="analysis-progress ${activeAnalysis ? "" : "hidden"}">${activeAnalysis ? this.t("analysis.running", {
+          completed: game.analysisState.progress?.completed || 0,
+          total: game.analysisState.progress?.total || (record.moveHistoryUci || []).length
+        }) : ""}</div>
+        <div class="analysis-inline-list"></div>
+      `;
+      const buttons = entry.querySelectorAll(".archive-actions button");
+      buttons[0].onclick = () => game.openFinishedGameReview(record.id);
+      buttons[1].onclick = () => game.requestPostGameAnalysis(record.id);
+      buttons[2].onclick = () => game.deleteArchivedGame(record.id);
+      this.renderAnalysisCards(entry.querySelector(".analysis-inline-list"), cards, record.id, {
+        showEmpty: activeAnalysis || record.analysisStatus === "done"
+      });
+      list.appendChild(entry);
+    });
+
+    overlay.classList.remove("hidden");
+  },
+
   updateButtons() {
     const undoButton = document.getElementById("btn-undo-move");
     const drawButton = document.getElementById("btn-claim-draw");
     const hintButton = document.getElementById("btn-hint");
+    const archiveButton = document.getElementById("btn-open-archive");
+    const analyzeButton = document.getElementById("btn-analyze-game");
     const replayButton = document.getElementById("btn-open-review");
     const exportButton = document.getElementById("btn-export-pgn");
     const copyFenButton = document.getElementById("btn-copy-fen");
@@ -634,6 +768,11 @@ const ui = {
     if (hintButton) {
       hintButton.disabled = !game.currentState || game.isGameOver() || game.pendingPromotion || !game.canUseCoach();
       hintButton.innerText = game.getHintButtonLabel();
+    }
+    if (archiveButton) archiveButton.disabled = !game.hasArchiveGames();
+    if (analyzeButton) {
+      analyzeButton.disabled = !game.finishedGameId || game.analysisState.loading;
+      analyzeButton.innerText = game.analysisState.loading ? this.t("analysis.runningShort") : this.t("analysis.start");
     }
     if (replayButton) replayButton.disabled = !game.canOpenReview();
     if (exportButton) exportButton.disabled = !game.currentState;
@@ -655,6 +794,7 @@ const ui = {
     this.renderPromotionModal();
     this.renderResultModal();
     this.renderReviewOverlay();
+    this.renderArchiveOverlay();
     this.updateButtons();
   },
 

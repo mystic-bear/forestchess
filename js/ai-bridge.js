@@ -17,11 +17,13 @@
       this.lastError = null;
       this.requestTimeoutMs = {
         chooseMove: options.requestTimeoutMs?.chooseMove || 10000,
-        getHint: options.requestTimeoutMs?.getHint || 10000
+        getHint: options.requestTimeoutMs?.getHint || 10000,
+        analyzeGame: options.requestTimeoutMs?.analyzeGame || 45000
       };
       this.softDeadlineMs = {
         chooseMove: options.softDeadlineMs?.chooseMove || 9000,
-        getHint: options.softDeadlineMs?.getHint || 9000
+        getHint: options.softDeadlineMs?.getHint || 9000,
+        analyzeGame: options.softDeadlineMs?.analyzeGame || 40000
       };
       this._initWorker();
     }
@@ -92,8 +94,16 @@
       return setTimeout(() => {
         const pending = this.pending.get(id);
         if (!pending) return;
-        const label = type === "chooseMove" ? "AI move" : "Hint";
-        const code = type === "chooseMove" ? "choose-move-timeout" : "hint-timeout";
+        const label = type === "chooseMove"
+          ? "AI move"
+          : type === "getHint"
+            ? "Hint"
+            : "Review analysis";
+        const code = type === "chooseMove"
+          ? "choose-move-timeout"
+          : type === "getHint"
+            ? "hint-timeout"
+            : "review-timeout";
         const error = this._createBridgeError(`${label} request timed out`, code);
 
         if (pending.lastPartial) {
@@ -238,6 +248,11 @@
 
         if (type === "hintResult") {
           entry.resolve({ hint, stateVersion });
+          return;
+        }
+
+        if (type === "reviewResult") {
+          entry.resolve({ review: event.data.review, stateVersion });
         }
       };
 
@@ -327,6 +342,31 @@
       });
     }
 
+    analyzeGame(reviewTarget, stateVersion, callbacks = {}) {
+      const id = this._createRequestId("review");
+      return new Promise((resolve, reject) => {
+        if (!this._ensureWorker()) {
+          reject(this._getWorkerError("Worker unavailable", "worker-unavailable"));
+          return;
+        }
+
+        this.pending.set(id, this._createPendingEntry(id, "analyzeGame", stateVersion, resolve, reject, callbacks));
+        try {
+          this.worker.postMessage({
+            type: "analyzeGame",
+            id,
+            stateVersion,
+            reviewTarget,
+            budgetMs: this._getRequestTimeoutMs("analyzeGame"),
+            softDeadlineMs: this._getSoftDeadlineMs("analyzeGame"),
+            allowPartial: false
+          });
+        } catch (error) {
+          this._restartWorker(error);
+        }
+      });
+    }
+
     cancelPending() {
       this._rejectAllPending(new Error("Cancelled"));
       this._initWorker();
@@ -347,6 +387,9 @@
         return Promise.reject(this.lastError);
       },
       getHint() {
+        return Promise.reject(this.lastError);
+      },
+      analyzeGame() {
         return Promise.reject(this.lastError);
       },
       cancelPending() {}

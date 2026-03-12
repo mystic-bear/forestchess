@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Forest Chess</title>
-  <link rel="stylesheet" href="css/style.css?v=20260312_163200" />
+  <link rel="stylesheet" href="css/style.css?v=20260312_171157" />
 </head>
 <body>
   <div id="start-screen" class="screen">
@@ -44,6 +44,9 @@
         <div class="setup-summary-card">
           <div id="setup-summary" class="setup-summary"></div>
           <button id="btn-open-setup" class="action-btn primary" onclick="ui.showSetup()" data-i18n="start.openCustomSetup">Open custom setup</button>
+        </div>
+        <div class="start-archive-actions">
+          <button id="btn-open-archive" class="action-btn secondary" onclick="game.openArchive()" data-i18n="archive.open">Recent games</button>
         </div>
       </div>
 
@@ -167,9 +170,12 @@
       <div id="result-title" class="overlay-title">Game over</div>
       <div id="result-text" class="overlay-text">The result is being prepared.</div>
       <div id="review-summary" class="review-summary"></div>
+      <div id="analysis-progress" class="analysis-progress hidden"></div>
+      <div id="analysis-card-list" class="analysis-card-list"></div>
       <div class="overlay-actions">
         <button class="action-btn primary" onclick="game.restart()" data-i18n="buttons.restart">Restart</button>
         <button class="action-btn secondary" onclick="game.toMenu()" data-i18n="buttons.menu">Menu</button>
+        <button id="btn-analyze-game" class="action-btn secondary" onclick="game.requestPostGameAnalysis()" data-i18n="analysis.start">Analyze game</button>
         <button id="btn-open-review" class="action-btn secondary" onclick="game.openReview()">Replay</button>
         <button id="btn-export-pgn" class="action-btn secondary" onclick="game.exportPgn()">Export PGN</button>
         <button id="btn-copy-fen" class="action-btn secondary" onclick="game.copyFen()">Copy FEN</button>
@@ -192,22 +198,32 @@
     </div>
   </div>
 
+  <div id="archive-overlay" class="overlay hidden">
+    <div class="overlay-card archive-card">
+      <div class="overlay-title" data-i18n="archive.title">Recent games</div>
+      <div id="archive-list" class="archive-list"></div>
+      <div class="overlay-actions">
+        <button class="action-btn primary" onclick="game.closeArchive()" data-i18n="buttons.back">Back</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast">Notice</div>
 
-  <script src="shared/i18n.js?v=20260312_160900"></script>
-  <script src="shared/constants.js?v=20260312_160900"></script>
-  <script src="shared/utils.js?v=20260312_160900"></script>
-  <script src="js/chess/chess-state.js?v=20260312_163200"></script>
-  <script src="js/chess/fen.js?v=20260312_163200"></script>
-  <script src="js/chess/move-generator.js?v=20260312_163200"></script>
-  <script src="js/chess/san.js?v=20260312_163200"></script>
-  <script src="js/chess/rules.js?v=20260312_163200"></script>
-  <script src="js/chess/pgn.js?v=20260312_163200"></script>
-  <script src="js/chess/review.js?v=20260312_163200"></script>
-  <script src="js/persistence/save-manager.js?v=20260312_163200"></script>
-  <script src="js/ai-bridge.js?v=20260312_163200"></script>
-  <script src="js/game.js?v=20260312_163200"></script>
-  <script src="js/ui.js?v=20260312_163200"></script>
-  <script src="js/app.js?v=20260312_163200"></script>
+  <script src="shared/i18n.js?v=20260312_171157"></script>
+  <script src="shared/constants.js?v=20260312_171157"></script>
+  <script src="shared/utils.js?v=20260312_171157"></script>
+  <script src="js/chess/chess-state.js?v=20260312_171157"></script>
+  <script src="js/chess/fen.js?v=20260312_171157"></script>
+  <script src="js/chess/move-generator.js?v=20260312_171157"></script>
+  <script src="js/chess/san.js?v=20260312_171157"></script>
+  <script src="js/chess/rules.js?v=20260312_171157"></script>
+  <script src="js/chess/pgn.js?v=20260312_171157"></script>
+  <script src="js/chess/review.js?v=20260312_171157"></script>
+  <script src="js/persistence/save-manager.js?v=20260312_171157"></script>
+  <script src="js/ai-bridge.js?v=20260312_171157"></script>
+  <script src="js/game.js?v=20260312_171157"></script>
+  <script src="js/ui.js?v=20260312_171157"></script>
+  <script src="js/app.js?v=20260312_171157"></script>
 </body>
 </html>

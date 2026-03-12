@@ -11,6 +11,7 @@
   let ChessRules;
   let StockfishAdapter;
   let CoachDispatcher;
+  let ReviewDispatcher;
   let addMessageListener;
   let postMessageSafe;
 
@@ -24,6 +25,7 @@
     ChessRules = require("../js/chess/rules.js");
     StockfishAdapter = require("./stockfish-adapter.js");
     CoachDispatcher = require("./coach-dispatcher.js");
+    ReviewDispatcher = require("./review-dispatcher.js");
     addMessageListener = (handler) => parentPort.on("message", (data) => handler({ data }));
     postMessageSafe = (payload) => parentPort.postMessage(payload);
   } else {
@@ -33,20 +35,22 @@
       "../js/chess/chess-state.js",
       "../js/chess/rules.js",
       "stockfish-adapter.js",
-      "coach-dispatcher.js"
+      "coach-dispatcher.js",
+      "review-dispatcher.js"
     );
     constants = globalScope;
     ChessState = globalScope.ChessState;
     ChessRules = globalScope.ChessRules;
     StockfishAdapter = globalScope.StockfishAdapter;
     CoachDispatcher = globalScope.CoachDispatcher;
+    ReviewDispatcher = globalScope.ReviewDispatcher;
     addMessageListener = (handler) => {
       globalScope.onmessage = handler;
     };
     postMessageSafe = (payload) => globalScope.postMessage(payload);
   }
 
-  const { AI_LEVEL_INFO, COACH_PROFILE, ENGINE_ASSET_CANDIDATES, translateUi, DEFAULT_LANGUAGE } = constants;
+  const { AI_LEVEL_INFO, COACH_PROFILE, REVIEW_PROFILE, ENGINE_ASSET_CANDIDATES, translateUi, DEFAULT_LANGUAGE } = constants;
   let engineSessionPromise = null;
 
   function t(gameState, key, params = {}) {
@@ -303,6 +307,113 @@
     });
   }
 
+  async function handleAnalyzeGame(request) {
+    const target = request.reviewTarget || {};
+    const initialFen = String(target.initialFen || "").trim();
+    if (!initialFen) {
+      const error = new Error("analyzeGame requires reviewTarget.initialFen");
+      error.code = "analysis-missing-fen";
+      throw error;
+    }
+
+    const moveHistoryUci = Array.isArray(target.moveHistoryUci) ? target.moveHistoryUci : [];
+    const language = target.language || DEFAULT_LANGUAGE || "ko";
+    const maxMoments = Math.max(1, Number(target.maxMoments) || REVIEW_PROFILE.maxMoments || 5);
+    const reconstructed = moveHistoryUci.length
+      ? ChessRules.playMoves(moveHistoryUci, { fen: initialFen })
+      : ChessRules.createGame({ fen: initialFen });
+    const history = Array.isArray(reconstructed.history) ? reconstructed.history : [];
+
+    if (history.length === 0) {
+      post({
+        type: "reviewResult",
+        id: request.id,
+        stateVersion: request.stateVersion,
+        review: ReviewDispatcher.buildReviewResult(target, [], language)
+      });
+      return;
+    }
+
+    const session = await getEngineSession();
+    const rawMoments = [];
+    const afterMoveTime = Math.max(80, Math.round((REVIEW_PROFILE.movetime || 180) * 0.7));
+
+    for (let index = 0; index < history.length; index += 1) {
+      const entry = history[index];
+      const stateBefore = ChessState.parseFen(entry.fenBefore);
+      const playedMove = ChessState.parseUciMove(stateBefore, entry.uci);
+
+      const beforeAnalysis = await session.analyzePosition({
+        fen: entry.fenBefore,
+        movetime: REVIEW_PROFILE.movetime,
+        skillLevel: REVIEW_PROFILE.skillLevel,
+        multipv: REVIEW_PROFILE.multipv
+      });
+
+      const afterAnalysis = await session.analyzePosition({
+        fen: entry.fenAfter,
+        movetime: afterMoveTime,
+        skillLevel: REVIEW_PROFILE.skillLevel,
+        multipv: 1
+      });
+
+      const bestMove = beforeAnalysis.bestmove
+        ? ChessState.parseUciMove(stateBefore, beforeAnalysis.bestmove)
+        : null;
+      const bestUci = bestMove?.uci || beforeAnalysis.bestmove || null;
+      const bestSan = bestMove ? ChessState.moveToSan(stateBefore, bestMove) : null;
+      const swingCp = ReviewDispatcher.computeSwingFromAnalysis(beforeAnalysis, afterAnalysis, entry);
+
+      rawMoments.push({
+        ply: entry.ply || index + 1,
+        fen: entry.fenBefore,
+        moveSan: entry.san || null,
+        playedUci: entry.uci || null,
+        bestUci,
+        bestSan,
+        evalBeforeCp: beforeAnalysis.scoreCp ?? null,
+        evalAfterCp: afterAnalysis.scoreCp ?? null,
+        swingCp,
+        inCheckBefore: ChessState.isInCheck(stateBefore, stateBefore.turn),
+        playedMove,
+        bestMove,
+        playedPieceType: playedMove?.piece ? ChessState.pieceType(playedMove.piece) : null,
+        bestPieceType: bestMove?.piece ? ChessState.pieceType(bestMove.piece) : null,
+        missedMate: Number.isInteger(beforeAnalysis.scoreMate) && beforeAnalysis.scoreMate > 0 && bestUci !== entry.uci
+      });
+
+      post({
+        type: "progress",
+        id: request.id,
+        stateVersion: request.stateVersion,
+        progressMeta: {
+          phase: "review-analysis",
+          completed: index + 1,
+          total: history.length,
+          candidate: entry.san || entry.uci || null
+        }
+      });
+    }
+
+    const interestingMoments = rawMoments
+      .filter((entry) => entry.bestUci !== entry.playedUci || entry.missedMate || (entry.swingCp || 0) >= 40)
+      .sort((a, b) => (b.swingCp || 0) - (a.swingCp || 0))
+      .slice(0, maxMoments);
+
+    const selectedMoments = interestingMoments.length > 0
+      ? interestingMoments
+      : rawMoments
+        .sort((a, b) => (b.swingCp || 0) - (a.swingCp || 0))
+        .slice(0, Math.min(maxMoments, rawMoments.length));
+
+    post({
+      type: "reviewResult",
+      id: request.id,
+      stateVersion: request.stateVersion,
+      review: ReviewDispatcher.buildReviewResult(target, selectedMoments, language)
+    });
+  }
+
   async function handleRequest(event) {
     const request = event.data || {};
 
@@ -314,6 +425,11 @@
 
       if (request.type === "getHint") {
         await handleGetHint(request);
+        return;
+      }
+
+      if (request.type === "analyzeGame") {
+        await handleAnalyzeGame(request);
       }
     } catch (error) {
       const payload = normalizeErrorPayload(error);

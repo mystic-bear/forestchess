@@ -634,11 +634,17 @@ button {
 
 .square.last-from,
 .square.last-to {
-  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.4);
+  box-shadow:
+    inset 0 0 0 4px rgba(133, 74, 17, 0.92),
+    inset 0 0 0 9px rgba(255, 209, 122, 0.58);
+  background-image: linear-gradient(180deg, rgba(255, 219, 154, 0.38), rgba(216, 108, 61, 0.18));
 }
 
 .square.last-to {
-  background-image: linear-gradient(180deg, rgba(216, 108, 61, 0.24), rgba(216, 108, 61, 0.12));
+  box-shadow:
+    inset 0 0 0 4px rgba(146, 56, 20, 0.96),
+    inset 0 0 0 10px rgba(255, 188, 92, 0.66);
+  background-image: linear-gradient(180deg, rgba(255, 194, 92, 0.5), rgba(216, 108, 61, 0.24));
 }
 
 .square.legal-target {
@@ -926,6 +932,109 @@ button {
 
 .review-card {
   width: min(760px, 100%);
+}
+
+.archive-card {
+  width: min(980px, 100%);
+}
+
+.start-archive-actions {
+  margin-top: 16px;
+}
+
+.analysis-progress {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(74, 107, 55, 0.12);
+  color: var(--text-muted);
+}
+
+.analysis-progress.hidden {
+  display: none;
+}
+
+.analysis-card-list,
+.archive-list {
+  margin-top: 16px;
+  display: grid;
+  gap: 12px;
+  max-height: 56vh;
+  overflow: auto;
+}
+
+.analysis-card,
+.archive-entry {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(82, 96, 54, 0.12);
+}
+
+.analysis-card {
+  display: grid;
+  gap: 10px;
+}
+
+.archive-entry {
+  display: grid;
+  gap: 12px;
+}
+
+.archive-head,
+.analysis-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.archive-title,
+.analysis-title {
+  font-size: 1rem;
+}
+
+.archive-meta,
+.analysis-meta,
+.analysis-overall {
+  display: grid;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.analysis-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(74, 107, 55, 0.12);
+  color: var(--text-muted);
+  font-size: 0.76rem;
+}
+
+.analysis-actions,
+.archive-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.analysis-inline-list {
+  display: grid;
+  gap: 10px;
+}
+
+.analysis-empty,
+.archive-empty {
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.74);
+  color: var(--text-muted);
+  line-height: 1.5;
 }
 
 .review-board-shell {

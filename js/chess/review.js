@@ -131,8 +131,30 @@
     return frames;
   }
 
+  function buildReviewLaunchPayload(moment) {
+    if (!moment?.fen) return null;
+    const state = ChessState.parseFen(moment.fen);
+    return {
+      fen: moment.fen,
+      ply: moment.ply || 0,
+      turn: state.turn,
+      moveSan: moment.moveSan || null
+    };
+  }
+
+  function buildCriticalMomentCards(analysisResult) {
+    const moments = Array.isArray(analysisResult?.moments) ? analysisResult.moments : [];
+    return moments.map((moment) => ({
+      ...moment,
+      id: `${moment.ply || 0}_${moment.playedUci || moment.bestUci || "moment"}`,
+      launch: buildReviewLaunchPayload(moment)
+    }));
+  }
+
   return {
     buildReviewSummary,
-    buildReplayFrames
+    buildReplayFrames,
+    buildCriticalMomentCards,
+    buildReviewLaunchPayload
   };
 });
