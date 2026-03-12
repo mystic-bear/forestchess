@@ -564,10 +564,26 @@
     });
   }
 
+  async function handleNewGame(request) {
+    const session = await getEngineSession();
+    await session.newGame();
+    post({
+      type: "newGameResult",
+      id: request.id,
+      stateVersion: request.stateVersion,
+      ok: true
+    });
+  }
+
   async function handleRequest(event) {
     const request = event.data || {};
 
     try {
+      if (request.type === "newGame") {
+        await handleNewGame(request);
+        return;
+      }
+
       if (request.type === "chooseMove") {
         await handleChooseMove(request);
         return;

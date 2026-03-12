@@ -18,6 +18,21 @@ const {
 
 const ROOT = path.resolve(__dirname, "..");
 const DEFAULT_OUTPUT_DIR = path.join(ROOT, "docs");
+const DEFAULT_MAX_PLIES = 220;
+const DEFAULT_SEED = Date.now();
+
+const OPENING_LIBRARY = [
+  { key: "start", name: "Start position", moves: [] },
+  { key: "italian", name: "Italian Game", moves: ["e2e4", "e7e5", "g1f3", "b8c6", "f1c4", "f8c5"] },
+  { key: "ruy_lopez", name: "Ruy Lopez", moves: ["e2e4", "e7e5", "g1f3", "b8c6", "f1b5", "a7a6"] },
+  { key: "queens_gambit", name: "Queen's Gambit Declined", moves: ["d2d4", "d7d5", "c2c4", "e7e6", "b1c3", "g8f6"] },
+  { key: "slav", name: "Slav Defense", moves: ["d2d4", "d7d5", "c2c4", "c7c6", "g1f3", "g8f6"] },
+  { key: "sicilian", name: "Sicilian Defense", moves: ["e2e4", "c7c5", "g1f3", "d7d6", "d2d4", "c5d4", "f3d4", "g8f6"] },
+  { key: "french", name: "French Defense", moves: ["e2e4", "e7e6", "d2d4", "d7d5", "b1c3", "g8f6"] },
+  { key: "caro_kann", name: "Caro-Kann", moves: ["e2e4", "c7c6", "d2d4", "d7d5", "b1c3", "d5e4", "c3e4"] },
+  { key: "english", name: "English Opening", moves: ["c2c4", "e7e5", "b1c3", "g8f6", "g2g3", "d7d5"] },
+  { key: "kings_indian", name: "King's Indian", moves: ["d2d4", "g8f6", "c2c4", "g7g6", "b1c3", "f8g7"] }
+];
 
 const PIECE_VALUES = {
   p: 1,
@@ -32,11 +47,12 @@ function parseArgs(argv) {
   const options = {
     players: null,
     games: 2,
-    maxPlies: 140,
+    maxPlies: DEFAULT_MAX_PLIES,
     concurrency: Math.max(1, Math.min(2, os.cpus().length || 2)),
     language: "ko",
     outputDir: DEFAULT_OUTPUT_DIR,
-    prefix: "ai_match_series"
+    prefix: "ai_match_series",
+    seed: DEFAULT_SEED
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -62,6 +78,9 @@ function parseArgs(argv) {
       index += 1;
     } else if (arg === "--prefix" && next) {
       options.prefix = String(next).trim() || options.prefix;
+      index += 1;
+    } else if (arg === "--seed" && next) {
+      options.seed = Number.parseInt(next, 10) || options.seed;
       index += 1;
     }
   }
@@ -166,6 +185,11 @@ class AiWorkerClient {
   routeMessage(message) {
     const pending = this.pending.get(message.id);
     if (!pending) return;
+    if (message.type === "newGameResult") {
+      this.pending.delete(message.id);
+      pending.resolve(message.ok === true);
+      return;
+    }
     if (message.type === "moveResult") {
       this.pending.delete(message.id);
       pending.resolve(message.move || null);
@@ -191,6 +215,19 @@ class AiWorkerClient {
         aiLevel: spec.aiLevel,
         allowPartial: false,
         gameState
+      });
+    });
+  }
+
+  async newGame() {
+    await this.init();
+    const id = `series_newgame_${process.pid}_${Date.now()}_${this.requestSeq += 1}`;
+    return new Promise((resolve, reject) => {
+      this.pending.set(id, { resolve, reject });
+      this.worker.postMessage({
+        type: "newGame",
+        id,
+        stateVersion: 0
       });
     });
   }
@@ -233,6 +270,11 @@ class CoachEngineClient {
     return buildMovePacket(gameState.fen, analysis);
   }
 
+  async newGame() {
+    const session = await this.init();
+    await session.newGame();
+  }
+
   async dispose() {
     if (!this.session) return;
     this.session.dispose();
@@ -260,6 +302,61 @@ function buildMovePacket(fen, analysis) {
     scoreMate: analysis?.scoreMate ?? null,
     enginePath: analysis?.enginePath ?? null,
     backend: analysis?.backend ?? null
+  };
+}
+
+function createOpeningRng(seedValue) {
+  let seed = Number(seedValue) >>> 0;
+  if (!seed) seed = 1;
+  return function next() {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 0x100000000;
+  };
+}
+
+function chooseOpeningForJob(job, options) {
+  const seedBase = `${options.seed}:${job.id}:${job.whiteSpec.key}:${job.blackSpec.key}`;
+  let hash = 2166136261;
+  for (let index = 0; index < seedBase.length; index += 1) {
+    hash ^= seedBase.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  const random = createOpeningRng(hash >>> 0);
+  const selectedIndex = Math.floor(random() * OPENING_LIBRARY.length);
+  return OPENING_LIBRARY[selectedIndex];
+}
+
+function applyOpening(game, opening) {
+  let next = game;
+  const openingLogs = [];
+  for (const uci of opening.moves) {
+    next = ChessRules.makeMove(next, uci);
+    const historyEntry = next.history[next.history.length - 1];
+    openingLogs.push({
+      ply: historyEntry?.ply || next.history.length,
+      turn: historyEntry?.turn || null,
+      player: "Opening",
+      aiLevel: null,
+      fenBefore: historyEntry?.fenBefore || null,
+      fenAfter: historyEntry?.fenAfter || null,
+      moveUci: historyEntry?.uci || uci,
+      moveSan: historyEntry?.san || null,
+      from: historyEntry?.from || null,
+      to: historyEntry?.to || null,
+      pieceType: historyEntry?.movedPiece || null,
+      capturedPiece: historyEntry?.capturedPiece || null,
+      promotion: historyEntry?.promotion || null,
+      latencyMs: 0,
+      depth: null,
+      scoreCp: null,
+      scoreMate: null,
+      backend: "opening-book",
+      enginePath: opening.key
+    });
+  }
+  return {
+    game: next,
+    moveLogs: openingLogs
   };
 }
 
@@ -405,6 +502,13 @@ async function initClientBundle(bundle) {
   return bundle;
 }
 
+async function prepareNewGame(bundle) {
+  await Promise.all([
+    bundle.aiClient.newGame(),
+    bundle.coachClient.newGame()
+  ]);
+}
+
 async function disposeClientBundle(bundle) {
   await Promise.allSettled([
     bundle.aiClient.dispose(),
@@ -413,12 +517,15 @@ async function disposeClientBundle(bundle) {
 }
 
 async function simulateGame(job, bundle, options) {
-  let game = ChessRules.createGame();
-  let stateVersion = 1;
+  await prepareNewGame(bundle);
+  const opening = chooseOpeningForJob(job, options);
+  const openingState = applyOpening(ChessRules.createGame(), opening);
+  let game = openingState.game;
+  let stateVersion = game.history.length + 1;
   const startedAt = Date.now();
   const whiteStats = createMoveStats();
   const blackStats = createMoveStats();
-  const moveLogs = [];
+  const moveLogs = openingState.moveLogs.slice();
   let resultInfo = null;
 
   while (!resultInfo) {
@@ -494,6 +601,12 @@ async function simulateGame(job, bundle, options) {
     finalFen: ChessState.serializeFen(game.state),
     materialBalance: computeMaterialBalance(game.state),
     summary: ChessReview.buildReviewSummary(gameLike, options.language),
+    opening: {
+      key: opening.key,
+      name: opening.name,
+      moveCount: opening.moves.length,
+      moves: opening.moves.slice()
+    },
     pgn: ChessPgn.buildPgn(gameLike, {
       event: "Forest Chess Match Series",
       site: "Headless",
@@ -646,6 +759,8 @@ function buildMarkdownReport(options, summary, records) {
     `- Games: ${options.games}`,
     `- Max plies: ${options.maxPlies}`,
     `- Concurrency: ${options.concurrency}`,
+    `- Seed: ${options.seed}`,
+    `- Opening set size: ${OPENING_LIBRARY.length}`,
     "- Raw JSON includes per-game PGN, SAN/UCI history, and move-by-move logs with FEN, depth, score, and latency.",
     "",
     "## Series Summary",
@@ -666,13 +781,13 @@ function buildMarkdownReport(options, summary, records) {
     "",
     "## Game List",
     "",
-    "| Game | White | Black | Result | Reason | Plies | Duration ms |",
-    "| --- | --- | --- | --- | --- | --- | --- |"
+    "| Game | White | Black | Opening | Result | Reason | Plies | Duration ms |",
+    "| --- | --- | --- | --- | --- | --- | --- | --- |"
   ];
 
   records.forEach((record) => {
     lines.push(
-      `| ${record.id} | ${record.white} | ${record.black} | ${record.result} | ${record.reason} | ${record.plies} | ${record.durationMs} |`
+      `| ${record.id} | ${record.white} | ${record.black} | ${record.opening?.name || "-"} | ${record.result} | ${record.reason} | ${record.plies} | ${record.durationMs} |`
     );
   });
 
@@ -685,6 +800,8 @@ function buildGamesCsv(records) {
     "round",
     "white",
     "black",
+    "opening_key",
+    "opening_name",
     "result",
     "reason",
     "plies",
@@ -702,6 +819,8 @@ function buildGamesCsv(records) {
       record.round,
       record.white,
       record.black,
+      record.opening?.key || "",
+      record.opening?.name || "",
       record.result,
       record.reason,
       record.plies,

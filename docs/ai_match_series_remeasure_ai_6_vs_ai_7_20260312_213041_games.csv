@@ -1,0 +1,11 @@
+game_id,round,white,black,opening_key,opening_name,result,reason,plies,move_count,duration_ms,white_avg_depth,black_avg_depth,white_avg_move_ms,black_avg_move_ms
+series_game_001,1,AI-6,AI-7,english,English Opening,1/2-1/2,threefold-repetition,80,40,54417,15.8649,18.4324,561.5405,908.5405
+series_game_002,2,AI-7,AI-6,queens_gambit,Queen's Gambit Declined,1/2-1/2,threefold-repetition,78,39,51051,15.4444,16.7778,857.7778,559.4722
+series_game_003,3,AI-6,AI-7,start,Start position,1/2-1/2,threefold-repetition,92,46,64492,14.3696,15.2826,531.8261,869.5870
+series_game_004,4,AI-7,AI-6,sicilian,Sicilian Defense,1/2-1/2,threefold-repetition,118,59,80601,16.3818,15.1273,908.0364,556.8545
+series_game_005,5,AI-6,AI-7,ruy_lopez,Ruy Lopez,1/2-1/2,threefold-repetition,197,99,138460,28.1875,30.0632,542.5938,908.6947
+series_game_006,6,AI-7,AI-6,sicilian,Sicilian Defense,1/2-1/2,max-plies-limit,220,110,155266,29.3774,26.9811,909.5849,554.7453
+series_game_007,7,AI-6,AI-7,start,Start position,0-1,checkmate,94,47,65931,27.4468,25.7660,523.3830,878.9149
+series_game_008,8,AI-7,AI-6,caro_kann,Caro-Kann,1/2-1/2,threefold-repetition,116,58,77891,17.3889,16.1455,874.9259,556.5273
+series_game_009,9,AI-6,AI-7,kings_indian,King's Indian,1/2-1/2,threefold-repetition,121,61,84191,16.1552,18.5614,555.5172,911.2105
+series_game_010,10,AI-7,AI-6,caro_kann,Caro-Kann,1/2-1/2,threefold-repetition,154,77,106631,24.1507,16.2838,897.0137,555.5946

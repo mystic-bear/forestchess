@@ -1,0 +1,11 @@
+game_id,round,white,black,opening_key,opening_name,result,reason,plies,move_count,duration_ms,white_avg_depth,black_avg_depth,white_avg_move_ms,black_avg_move_ms
+series_game_001,1,Coach,AI-7,sicilian,Sicilian Defense,1-0,checkmate,165,83,176465,30.6582,28.8333,1363.5063,880.5897
+series_game_002,2,AI-7,Coach,start,Start position,1/2-1/2,threefold-repetition,130,65,149411,19.6000,20.7692,890.6769,1406.9385
+series_game_003,3,Coach,AI-7,french,French Defense,1/2-1/2,threefold-repetition,88,44,94850,16.6585,15.0244,1407.8293,904.7561
+series_game_004,4,AI-7,Coach,sicilian,Sicilian Defense,0-1,checkmate,144,72,149050,27.0294,28.8971,839.0000,1352.1912
+series_game_005,5,Coach,AI-7,slav,Slav Defense,1/2-1/2,threefold-repetition,85,43,91590,28.5000,17.4872,1405.5750,906.2051
+series_game_006,6,AI-7,Coach,kings_indian,King's Indian,1/2-1/2,threefold-repetition,120,60,130056,20.5263,28.5965,875.8947,1405.1930
+series_game_007,7,Coach,AI-7,english,English Opening,1/2-1/2,threefold-repetition,99,50,107914,20.7234,16.3913,1406.4468,908.1739
+series_game_008,8,AI-7,Coach,start,Start position,1/2-1/2,threefold-repetition,78,39,90240,16.5897,17.9231,907.5128,1405.7692
+series_game_009,9,Coach,AI-7,queens_gambit,Queen's Gambit Declined,1/2-1/2,threefold-repetition,89,45,96322,22.9048,17.0732,1405.8571,908.3902
+series_game_010,10,AI-7,Coach,queens_gambit,Queen's Gambit Declined,1/2-1/2,threefold-repetition,49,25,49541,16.2273,17.8571,907.4545,1407.8095

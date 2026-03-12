@@ -1,0 +1,11 @@
+game_id,round,white,black,opening_key,opening_name,result,reason,plies,move_count,duration_ms,white_avg_depth,black_avg_depth,white_avg_move_ms,black_avg_move_ms
+series_game_001,1,AI-5,AI-6,ruy_lopez,Ruy Lopez,1/2-1/2,threefold-repetition,120,60,50725,13.8596,15.3684,331.2982,558.0526
+series_game_002,2,AI-6,AI-5,caro_kann,Caro-Kann,1-0,checkmate,143,72,58276,25.1471,23.9853,540.2206,316.2059
+series_game_003,3,AI-5,AI-6,slav,Slav Defense,1/2-1/2,max-plies-limit,220,110,94494,21.6449,26.2336,327.1402,555.5514
+series_game_004,4,AI-6,AI-5,caro_kann,Caro-Kann,1/2-1/2,threefold-repetition,143,72,59669,19.2941,20.0147,547.7500,329.2794
+series_game_005,5,AI-5,AI-6,sicilian,Sicilian Defense,1/2-1/2,threefold-repetition,89,45,35334,12.5854,14.8750,315.0976,559.8750
+series_game_006,6,AI-6,AI-5,caro_kann,Caro-Kann,1/2-1/2,threefold-repetition,124,62,52070,14.9655,13.9322,559.6207,332.0339
+series_game_007,7,AI-5,AI-6,slav,Slav Defense,1/2-1/2,threefold-repetition,96,48,40258,14.1556,15.0222,332.9111,561.4222
+series_game_008,8,AI-6,AI-5,caro_kann,Caro-Kann,1-0,checkmate,157,79,64664,24.7333,25.7467,542.9067,318.9333
+series_game_009,9,AI-5,AI-6,english,English Opening,1/2-1/2,threefold-repetition,80,40,32267,13.5135,15.9189,313.1081,558.7297
+series_game_010,10,AI-6,AI-5,caro_kann,Caro-Kann,1/2-1/2,insufficient-material,137,69,56648,17.0923,15.5385,547.6615,323.3846

@@ -1,0 +1,11 @@
+game_id,round,white,black,opening_key,opening_name,result,reason,plies,move_count,duration_ms,white_avg_depth,black_avg_depth,white_avg_move_ms,black_avg_move_ms
+series_game_001,1,Coach,AI-5,italian,Italian Game,1-0,checkmate,111,56,88179,31.5660,27.3846,1339.9245,329.0577
+series_game_002,2,AI-5,Coach,caro_kann,Caro-Kann,0-1,checkmate,74,37,55505,27.3636,32.2353,312.6364,1328.1176
+series_game_003,3,Coach,AI-5,start,Start position,1-0,checkmate,75,38,62431,31.0789,12.8919,1335.0789,315.1351
+series_game_004,4,AI-5,Coach,french,French Defense,1/2-1/2,threefold-repetition,108,54,88773,17.2157,23.7255,332.2157,1407.6471
+series_game_005,5,Coach,AI-5,start,Start position,1-0,checkmate,99,50,82373,33.4200,30.2449,1326.3400,326.9796
+series_game_006,6,AI-5,Coach,queens_gambit,Queen's Gambit Declined,0-1,checkmate,138,69,109014,28.3788,32.6515,321.3788,1329.7121
+series_game_007,7,Coach,AI-5,ruy_lopez,Ruy Lopez,1-0,checkmate,89,45,69208,29.6667,24.2927,1344.3333,310.1707
+series_game_008,8,AI-5,Coach,ruy_lopez,Ruy Lopez,1/2-1/2,threefold-repetition,140,70,116581,18.0896,28.6567,333.7463,1405.6866
+series_game_009,9,Coach,AI-5,kings_indian,King's Indian,1/2-1/2,threefold-repetition,120,60,99294,18.1930,14.1754,1406.3860,334.9825
+series_game_010,10,AI-5,Coach,kings_indian,King's Indian,1/2-1/2,threefold-repetition,81,41,64096,12.3947,16.9459,317.4211,1405.7297

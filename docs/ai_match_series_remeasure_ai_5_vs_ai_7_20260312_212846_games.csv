@@ -1,0 +1,11 @@
+game_id,round,white,black,opening_key,opening_name,result,reason,plies,move_count,duration_ms,white_avg_depth,black_avg_depth,white_avg_move_ms,black_avg_move_ms
+series_game_001,1,AI-5,AI-7,slav,Slav Defense,0-1,checkmate,110,55,61821,27.8077,33.8462,317.6346,870.5962
+series_game_002,2,AI-7,AI-5,caro_kann,Caro-Kann,1-0,checkmate,123,62,69510,27.3966,18.8966,880.2931,317.6552
+series_game_003,3,AI-5,AI-7,french,French Defense,0-1,checkmate,88,44,48484,27.4878,31.2683,313.7073,868.2683
+series_game_004,4,AI-7,AI-5,caro_kann,Caro-Kann,1-0,checkmate,109,55,60803,30.6275,31.5490,875.6863,316.0980
+series_game_005,5,AI-5,AI-7,caro_kann,Caro-Kann,0-1,checkmate,158,79,90741,23.9067,30.4737,319.7333,878.0526
+series_game_006,6,AI-7,AI-5,kings_indian,King's Indian,1-0,checkmate,145,73,84888,22.7714,22.1449,908.6143,308.1014
+series_game_007,7,AI-5,AI-7,french,French Defense,1/2-1/2,threefold-repetition,145,73,85805,13.5000,16.3768,329.0857,909.1739
+series_game_008,8,AI-7,AI-5,kings_indian,King's Indian,1-0,checkmate,117,59,66859,30.3750,30.9636,879.0179,320.2727
+series_game_009,9,AI-5,AI-7,start,Start position,0-1,checkmate,112,56,67093,24.0000,26.2679,318.4643,879.0714
+series_game_010,10,AI-7,AI-5,sicilian,Sicilian Defense,1-0,checkmate,127,64,70597,32.4667,29.4915,875.0167,306.2203

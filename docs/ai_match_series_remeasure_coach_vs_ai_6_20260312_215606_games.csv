@@ -1,0 +1,11 @@
+game_id,round,white,black,opening_key,opening_name,result,reason,plies,move_count,duration_ms,white_avg_depth,black_avg_depth,white_avg_move_ms,black_avg_move_ms
+series_game_001,1,Coach,AI-6,queens_gambit,Queen's Gambit Declined,1-0,checkmate,77,39,65675,31.0556,36.4571,1333.8056,503.6571
+series_game_002,2,AI-6,Coach,ruy_lopez,Ruy Lopez,1/2-1/2,threefold-repetition,156,78,147332,16.8933,24.1467,557.2133,1406.3733
+series_game_003,3,Coach,AI-6,queens_gambit,Queen's Gambit Declined,1-0,checkmate,185,93,171171,26.4111,18.2360,1364.7778,542.5393
+series_game_004,4,AI-6,Coach,slav,Slav Defense,1/2-1/2,max-plies-limit,220,110,210740,15.5514,20.7664,561.8318,1406.8972
+series_game_005,5,Coach,AI-6,ruy_lopez,Ruy Lopez,1-0,checkmate,179,90,165278,29.5517,24.2093,1368.9770,536.3953
+series_game_006,6,AI-6,Coach,start,Start position,0-1,checkmate,90,45,82941,23.1111,37.8000,524.5778,1317.9333
+series_game_007,7,Coach,AI-6,french,French Defense,1-0,checkmate,159,80,144889,31.3636,25.7105,1353.7792,534.1447
+series_game_008,8,AI-6,Coach,french,French Defense,1/2-1/2,threefold-repetition,201,101,190641,18.4082,25.6289,553.8163,1405.3711
+series_game_009,9,Coach,AI-6,italian,Italian Game,1/2-1/2,threefold-repetition,90,45,82569,18.7381,14.9286,1406.2857,559.0714
+series_game_010,10,AI-6,Coach,english,English Opening,1/2-1/2,threefold-repetition,131,66,122238,17.8254,31.2903,556.1746,1405.8387
