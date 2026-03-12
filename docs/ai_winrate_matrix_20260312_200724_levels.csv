@@ -1,0 +1,8 @@
+level,games,wins,losses,draws,score_rate,white_score_rate,black_score_rate,avg_plies,avg_game_ms,avg_move_latency_ms,avg_depth,avg_score_cp,reasons
+1,24,1,21,2,0.0833,0.0833,0.0833,82.96,14435.96,48.41,20.06,-198.62,"max-plies-limit:2; checkmate:22"
+2,24,4,18,2,0.2083,0.3333,0.0833,84.08,14865.83,75.81,19.77,-167.27,"max-plies-limit:2; checkmate:22"
+3,24,6,18,0,0.2500,0.2500,0.2500,82.08,16114.88,91.11,21.90,-167.40,"checkmate:24"
+4,24,12,10,2,0.5417,0.6667,0.4167,75.46,17075.63,134.25,23.38,25.55,"checkmate:22; threefold-repetition:2"
+5,24,15,5,4,0.7083,0.7500,0.6667,96.58,32648.67,323.86,23.56,85.44,"checkmate:20; max-plies-limit:3; threefold-repetition:1"
+6,24,17,0,7,0.8542,0.8333,0.8750,88.71,38796.75,544.14,23.95,176.94,"checkmate:17; max-plies-limit:4; threefold-repetition:3"
+7,24,17,0,7,0.8542,0.9167,0.7917,81.88,46740.63,885.01,23.82,259.81,"checkmate:17; threefold-repetition:6; max-plies-limit:1"
