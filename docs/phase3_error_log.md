@@ -188,3 +188,27 @@
 
 - The board keeps a stable desktop footprint instead of continuing to expand with empty horizontal space.
 - Smaller screens still shrink correctly because the cap is `min(100%, 760px)`.
+
+---
+
+## 2026-03-12 15:10:10 - Pushed Code Looked Old After Refresh
+
+### Symptom
+
+- The repository `main` branch had the latest commits, but the opened page still showed older assets such as text-based piece rendering.
+- The observed page did not match the current `origin/main` source.
+
+### Root Cause
+
+- There is no separate deploy branch in this repo, and `origin/main` was already up to date.
+- The most likely remaining cause was browser-side static asset caching of `css/style.css` and the JavaScript files.
+
+### Fix
+
+- Added version query strings to the stylesheet and script tags in `index.html`.
+- This forces the browser to request the newest asset URLs after each cache-busting update.
+
+### Result
+
+- `index.html` now points to versioned asset URLs, reducing the chance of stale CSS/JS after a push.
+- The mismatch is now narrowed to browser cache or the user opening a different local copy, not to `git push` itself.
