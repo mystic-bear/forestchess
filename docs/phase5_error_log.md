@@ -14,6 +14,12 @@ Track archive, post-game analysis, review cards, play-from-here, and legacy-isol
 
 ## Resolved issues
 
+- 2026-03-12 19:20
+  - Symptom: The first headless AI ladder report produced impossible color splits such as white-side score rates over 100%.
+  - Cause: The simulator aggregated `whiteScoreRate` and `blackScoreRate` using total draws instead of color-specific draws.
+  - Fix: Updated `test/chess-ai-winrate-sim.js` to track `whiteDraws` and `blackDraws` separately, then regenerated the full matrix output.
+  - Result: Color-split win-rate fields now stay within a valid 0-100% range, and the final matrix artifacts reflect the corrected aggregation.
+
 - 2026-03-12 18:06
   - Symptom: `AI-5` to `AI-7` were still too close to full-strength Stockfish, and `AI-7` overshot the intended "2000 challenge" feel.
   - Cause: All levels were still driven mainly by `Skill Level` and `movetime`, while upper levels had no Elo cap and weaker levels had no clear split from the stronger profiles.
